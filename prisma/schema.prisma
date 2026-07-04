@@ -11,3 +11,170 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Gender{
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum Difficulty{
+  EASY
+  MEDIUM
+  HARD
+  EXTREME
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String   @db.VarChar(255)
+  password    String
+  gender      Gender
+  country     String?
+  profile     String @db.VarChar(255)
+  collections Collection[]
+  meal_plans  MealPlan[]
+  shopping_lists  ShoppingList[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Category{
+  id        String   @id @default(cuid())
+  name      String   @unique
+  recipes   Recipe[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cuisine{
+  id        String    @id @default(cuid())
+  name      String    @unique
+  recipes   Recipe[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Recipe{
+  id          String   @id @default(cuid())
+  title       String   @db.VarChar(255)
+  slug        String
+  description String?
+  cover_image String   @db.VarChar(255)
+  prep_time   DateTime @db.Time(0)
+  cook_time   DateTime @db.Time(0)
+  total_time  DateTime @db.Time(0)
+  servings    Int
+  difficulty  Difficulty
+  Calories    Int
+  Protein     Int
+  Carbs       Int
+  Fat         Int
+  cuisines    Cuisine[]
+  categories  Category[]
+  tags        Tag[]
+  recipe_ingredients  RecipeIngredient[]
+  recipe_steps        RecipeStep[]
+  meal_plan_items     MealPlanItem[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+model RecipeIngredient {
+  id            String  @id @default(cuid())
+  name          String  @db.VarChar(255)
+  recipes       Recipe[]
+  qty           Int
+  unit          String
+  notes         String?
+  display_order Int
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model RecipeStep{
+  id           String  @id @default(cuid())
+  recipe_id    String
+  step_no      Int
+  instruction  String
+  image_url    String?
+  timer_min    DateTime @db.Time(0)
+  voice_text   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  recipe       Recipe @relation(fields: [recipe_id], references: [id])
+}
+
+model Tag{
+  id      String @id  @default(cuid())
+  name    String
+  slug    String
+  recipe  Recipe[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Collection{
+  id           String @id @default(cuid())
+  user_id      String
+  name         String @db.VarChar(255)
+  description  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User @relation(fields: [user_id], references: [id])
+}
+
+model MealPlan{
+  id          String  @id @default(cuid())
+  user_id     String
+  week_start  DateTime @db.Date
+  meal_plan_items MealPlanItem[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user        User @relation(fields: [user_id], references: [id])
+}
+
+model MealType{
+  id      String @id  @default(cuid())
+  name    String
+  meal_plan_items MealPlanItem[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model MealPlanItem{
+  id      String  @id @default(cuid())
+  meal_plan_id  String
+  recipe_id     String
+  date          DateTime  @db.Date
+  meal_type_id  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  meal_type     MealType @relation(fields: [meal_type_id], references: [id])
+  recipe        Recipe @relation(fields: [recipe_id], references: [id])
+  meal_plan     MealPlan  @relation(fields: [meal_plan_id], references: [id])
+}
+
+model ShoppingList{
+  id                    String  @id @default(cuid())
+  user_id               String
+  title                 String
+  shopping_list_items   ShoppingListItem[]
+
+  user    User @relation(fields: [user_id], references: [id])
+}
+
+model ShoppingListItem{
+  id                String @id  @default(cuid())
+  shopping_list_id  String
+  ingredient_name   String
+  qty               Int
+  unit              String
+  checked           Boolean
+
+  shopping_list     ShoppingList @relation(fields: [shopping_list_id], references: [id])
+}

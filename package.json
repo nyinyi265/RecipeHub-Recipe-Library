@@ -10,9 +10,13 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.11.2",
     "@hookform/resolvers": "^5.4.0",
+    "@neondatabase/serverless": "^1.1.0",
+    "@prisma/adapter-neon": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "aws-sdk": "^2.1693.0",
+    "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",

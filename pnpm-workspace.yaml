@@ -1,6 +1,7 @@
 allowBuilds:
   '@prisma/engines': true
   aws-sdk: true
+  bcrypt: true
   core-js: true
   prisma: true
   sharp: true

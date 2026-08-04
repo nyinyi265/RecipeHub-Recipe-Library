@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { signIn } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,6 +65,11 @@ export default function RegisterPage() {
   const [profileFile, setProfileFile] = useState<File | null>(null);
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
   const [profileError, setProfileError] = useState("");
+
+  async function handleGoogleSignIn() {
+    await signOut({ redirect: false });
+    await signIn("google", { callbackUrl: "/dashboard", prompt: "select_account" });
+  }
 
   const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
@@ -300,9 +305,7 @@ export default function RegisterPage() {
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
                   <Button
                     variant="outline"
-                    onClick={() =>
-                      signIn("google", { callbackUrl: "/dashboard" })
-                    }
+                    onClick={handleGoogleSignIn}
                     className="flex items-center justify-center gap-2 py-5 rounded-xl bg-white text-slate-900 border-1 border-orange-200 cursor-pointer hover:bg-slate-50"
                   >
                     <GoogleIcon className="h-4 w-4" />

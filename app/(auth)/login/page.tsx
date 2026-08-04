@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +31,11 @@ function FacebookIcon({ className }: { className?: string }) {
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+
+  async function handleGoogleSignIn() {
+    await signOut({ redirect: false });
+    await signIn("google", { callbackUrl: "/dashboard", prompt: "select_account" });
+  }
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -106,7 +111,7 @@ export default function LoginPage() {
                   <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-xs uppercase tracking-[0.28em] text-slate-400">or continue with</span>
                 </div>
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                  <Button variant="outline" onClick={() => signIn('google', { callbackUrl: '/dashboard' })} className="flex items-center justify-center gap-2 py-5 rounded-xl bg-white text-slate-900 border-1 border-orange-200 cursor-pointer hover:bg-slate-50">
+                  <Button variant="outline" onClick={handleGoogleSignIn} className="flex items-center justify-center gap-2 py-5 rounded-xl bg-white text-slate-900 border-1 border-orange-200 cursor-pointer hover:bg-slate-50">
                     <GoogleIcon className="h-4 w-4" />
                     Google
                   </Button>

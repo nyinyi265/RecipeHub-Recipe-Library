@@ -10,6 +10,13 @@ export const providers: Provider[] = [
   Google({
     clientId: process.env.AUTH_GOOGLE_ID!,
     clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+    authorization: {
+      params: {
+        // Force the Google account picker so SSO does not silently
+        // reuse the browser's previously authorized Google identity.
+        prompt: "select_account",
+      },
+    },
   }),
   {
     id: "credentials",

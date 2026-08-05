@@ -21,6 +21,8 @@ export const authConfig: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  // Prefer NEXTAUTH_SECRET (v4); fall back to AUTH_SECRET (Auth.js v5 naming).
+  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
   pages,
   providers,
   callbacks,

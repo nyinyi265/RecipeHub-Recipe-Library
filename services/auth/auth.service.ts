@@ -53,7 +53,11 @@ export const AuthService = {
    */
   async signInWithGoogle() {
     const { signIn } = await import("next-auth/react");
-    await signIn("google", { callbackUrl: "/dashboard" });
+    await signIn(
+      "google",
+      { callbackUrl: "/dashboard" },
+      { prompt: "select_account" },
+    );
   },
 
   /**

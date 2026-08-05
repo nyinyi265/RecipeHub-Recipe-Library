@@ -9,5 +9,6 @@ export const pages: Partial<PagesOptions> = {
   signOut: "/",
   error: "/login",
   verifyRequest: "/verify-email",
-  newUser: "/register",
+  // First-time OAuth users should land on the app, not the credentials register form.
+  newUser: "/dashboard",
 };

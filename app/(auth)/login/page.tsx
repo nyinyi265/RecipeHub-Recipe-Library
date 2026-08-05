@@ -34,7 +34,11 @@ export default function LoginPage() {
 
   async function handleGoogleSignIn() {
     await signOut({ redirect: false });
-    await signIn("google", { callbackUrl: "/dashboard", prompt: "select_account" });
+    await signIn(
+      "google",
+      { callbackUrl: "/dashboard" },
+      { prompt: "select_account" },
+    );
   }
 
   return (

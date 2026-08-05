@@ -68,7 +68,11 @@ export default function RegisterPage() {
 
   async function handleGoogleSignIn() {
     await signOut({ redirect: false });
-    await signIn("google", { callbackUrl: "/dashboard", prompt: "select_account" });
+    await signIn(
+      "google",
+      { callbackUrl: "/dashboard" },
+      { prompt: "select_account" },
+    );
   }
 
   const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];

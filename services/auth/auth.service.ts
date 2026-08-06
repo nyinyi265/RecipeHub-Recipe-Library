@@ -62,10 +62,15 @@ export const AuthService = {
 
   /**
    * Signs in with email and password.
-   * @remarks Not yet implemented. Credentials provider is a placeholder.
    */
-  async signInWithCredentials(_email: string, _password: string) {
-    throw new Error("Credentials login is not implemented yet.");
+  async signInWithCredentials(email: string, password: string) {
+    const { signIn } = await import("next-auth/react");
+    return signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+      callbackUrl: "/dashboard",
+    });
   },
 
   /**

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,12 +60,15 @@ function FacebookIcon({ className }: { className?: string }) {
 }
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [gender, setGender] = useState<string>("");
   const [country, setCountry] = useState("");
   const [profileFile, setProfileFile] = useState<File | null>(null);
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
   const [profileError, setProfileError] = useState("");
+  const [formError, setFormError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleGoogleSignIn() {
     await signOut({ redirect: false });
@@ -92,6 +96,72 @@ export default function RegisterPage() {
     } else {
       setProfileFile(null);
       setProfilePreview(null);
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setFormError("");
+    setProfileError("");
+
+    if (profileError) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const form = e.currentTarget;
+      const formData = new FormData(form);
+
+      if (gender) {
+        formData.set("gender", gender);
+      }
+
+      if (country) {
+        formData.set("country", country);
+      }
+
+      if (profileFile) {
+        formData.set("profile", profileFile);
+      }
+
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        setFormError(data.error ?? "Registration failed. Please try again.");
+        return;
+      }
+
+      const email = String(formData.get("email") ?? "");
+      const password = String(formData.get("password") ?? "");
+
+      const signInResult = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+        callbackUrl: "/dashboard",
+      });
+
+      if (signInResult?.error) {
+        setFormError(
+          "Account created, but sign-in failed. Please sign in manually.",
+        );
+        router.push("/login");
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setFormError("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -136,12 +206,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                }}
-                className="mt-8 space-y-2"
-              >
+              <form onSubmit={handleSubmit} className="mt-8 space-y-2">
                 <div>
                   <Label htmlFor="name" className="text-sm text-slate-700">
                     Full Name
@@ -152,6 +217,7 @@ export default function RegisterPage() {
                       id="name"
                       name="name"
                       type="text"
+                      required
                       placeholder="Marie Dupont"
                       className="h-12 pl-10 border-slate-200 bg-white text-slate-900 placeholder:text-slate-400"
                     />
@@ -168,6 +234,7 @@ export default function RegisterPage() {
                       id="email"
                       name="email"
                       type="email"
+                      required
                       placeholder="marie@recipehub.com"
                       className="h-12 pl-10 border-slate-200 bg-white text-slate-900 placeholder:text-slate-400"
                     />
@@ -184,6 +251,8 @@ export default function RegisterPage() {
                       id="password"
                       name="password"
                       type={showPassword ? "text" : "password"}
+                      required
+                      minLength={8}
                       placeholder="at least 8 characters"
                       className="h-12 pl-10 border-slate-200 bg-white text-slate-900 placeholder:text-slate-400"
                     />
@@ -291,11 +360,16 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
+                {formError && (
+                  <p className="pt-2 text-sm text-red-500">{formError}</p>
+                )}
+
                 <Button
                   type="submit"
-                  className="w-full rounded-lg bg-orange-500 px-4 py-5 text-base font-semibold text-white hover:bg-orange-600"
+                  disabled={isSubmitting}
+                  className="w-full rounded-lg bg-orange-500 px-4 py-5 text-base font-semibold text-white hover:bg-orange-600 disabled:opacity-60"
                 >
-                  Create Account
+                  {isSubmitting ? "Creating Account..." : "Create Account"}
                 </Button>
               </form>
 

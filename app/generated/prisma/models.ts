@@ -8,4 +8,21 @@
  *
  * 🟢 You can import this file directly.
  */
+export type * from './models/User'
+export type * from './models/Account'
+export type * from './models/Session'
+export type * from './models/VerificationToken'
+export type * from './models/Authenticator'
+export type * from './models/Category'
+export type * from './models/Cuisine'
+export type * from './models/Recipe'
+export type * from './models/RecipeIngredient'
+export type * from './models/RecipeStep'
+export type * from './models/Tag'
+export type * from './models/Collection'
+export type * from './models/MealPlan'
+export type * from './models/MealType'
+export type * from './models/MealPlanItem'
+export type * from './models/ShoppingList'
+export type * from './models/ShoppingListItem'
 export type * from './commonInputTypes'

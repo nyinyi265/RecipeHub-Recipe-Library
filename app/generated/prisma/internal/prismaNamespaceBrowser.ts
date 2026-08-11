@@ -51,7 +51,23 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-
+  User: 'User',
+  Account: 'Account',
+  Session: 'Session',
+  VerificationToken: 'VerificationToken',
+  Authenticator: 'Authenticator',
+  Category: 'Category',
+  Cuisine: 'Cuisine',
+  Recipe: 'Recipe',
+  RecipeIngredient: 'RecipeIngredient',
+  RecipeStep: 'RecipeStep',
+  Tag: 'Tag',
+  Collection: 'Collection',
+  MealPlan: 'MealPlan',
+  MealType: 'MealType',
+  MealPlanItem: 'MealPlanItem',
+  ShoppingList: 'ShoppingList',
+  ShoppingListItem: 'ShoppingListItem'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -68,4 +84,246 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 } as const)
 
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+
+
+export const UserScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  name: 'name',
+  password: 'password',
+  gender: 'gender',
+  country: 'country',
+  profile: 'profile',
+  emailVerified: 'emailVerified',
+  image: 'image',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const AccountScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  type: 'type',
+  provider: 'provider',
+  providerAccountId: 'providerAccountId',
+  refresh_token: 'refresh_token',
+  access_token: 'access_token',
+  expires_at: 'expires_at',
+  token_type: 'token_type',
+  scope: 'scope',
+  id_token: 'id_token',
+  session_state: 'session_state'
+} as const
+
+export type AccountScalarFieldEnum = (typeof AccountScalarFieldEnum)[keyof typeof AccountScalarFieldEnum]
+
+
+export const SessionScalarFieldEnum = {
+  id: 'id',
+  sessionToken: 'sessionToken',
+  userId: 'userId',
+  expires: 'expires'
+} as const
+
+export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
+
+
+export const VerificationTokenScalarFieldEnum = {
+  identifier: 'identifier',
+  token: 'token',
+  expires: 'expires'
+} as const
+
+export type VerificationTokenScalarFieldEnum = (typeof VerificationTokenScalarFieldEnum)[keyof typeof VerificationTokenScalarFieldEnum]
+
+
+export const AuthenticatorScalarFieldEnum = {
+  id: 'id',
+  credentialID: 'credentialID',
+  userId: 'userId',
+  providerAccountId: 'providerAccountId',
+  credentialPublicKey: 'credentialPublicKey',
+  counter: 'counter',
+  credentialDeviceType: 'credentialDeviceType',
+  credentialBackedUp: 'credentialBackedUp',
+  transports: 'transports'
+} as const
+
+export type AuthenticatorScalarFieldEnum = (typeof AuthenticatorScalarFieldEnum)[keyof typeof AuthenticatorScalarFieldEnum]
+
+
+export const CategoryScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CategoryScalarFieldEnum = (typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum]
+
+
+export const CuisineScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CuisineScalarFieldEnum = (typeof CuisineScalarFieldEnum)[keyof typeof CuisineScalarFieldEnum]
+
+
+export const RecipeScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  slug: 'slug',
+  description: 'description',
+  cover_image: 'cover_image',
+  prep_time: 'prep_time',
+  cook_time: 'cook_time',
+  total_time: 'total_time',
+  servings: 'servings',
+  difficulty: 'difficulty',
+  Calories: 'Calories',
+  Protein: 'Protein',
+  Carbs: 'Carbs',
+  Fat: 'Fat',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RecipeScalarFieldEnum = (typeof RecipeScalarFieldEnum)[keyof typeof RecipeScalarFieldEnum]
+
+
+export const RecipeIngredientScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  qty: 'qty',
+  unit: 'unit',
+  notes: 'notes',
+  display_order: 'display_order',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RecipeIngredientScalarFieldEnum = (typeof RecipeIngredientScalarFieldEnum)[keyof typeof RecipeIngredientScalarFieldEnum]
+
+
+export const RecipeStepScalarFieldEnum = {
+  id: 'id',
+  recipe_id: 'recipe_id',
+  step_no: 'step_no',
+  instruction: 'instruction',
+  image_url: 'image_url',
+  timer_min: 'timer_min',
+  voice_text: 'voice_text',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RecipeStepScalarFieldEnum = (typeof RecipeStepScalarFieldEnum)[keyof typeof RecipeStepScalarFieldEnum]
+
+
+export const TagScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TagScalarFieldEnum = (typeof TagScalarFieldEnum)[keyof typeof TagScalarFieldEnum]
+
+
+export const CollectionScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  name: 'name',
+  description: 'description',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CollectionScalarFieldEnum = (typeof CollectionScalarFieldEnum)[keyof typeof CollectionScalarFieldEnum]
+
+
+export const MealPlanScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  week_start: 'week_start',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MealPlanScalarFieldEnum = (typeof MealPlanScalarFieldEnum)[keyof typeof MealPlanScalarFieldEnum]
+
+
+export const MealTypeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MealTypeScalarFieldEnum = (typeof MealTypeScalarFieldEnum)[keyof typeof MealTypeScalarFieldEnum]
+
+
+export const MealPlanItemScalarFieldEnum = {
+  id: 'id',
+  meal_plan_id: 'meal_plan_id',
+  recipe_id: 'recipe_id',
+  date: 'date',
+  meal_type_id: 'meal_type_id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MealPlanItemScalarFieldEnum = (typeof MealPlanItemScalarFieldEnum)[keyof typeof MealPlanItemScalarFieldEnum]
+
+
+export const ShoppingListScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  title: 'title'
+} as const
+
+export type ShoppingListScalarFieldEnum = (typeof ShoppingListScalarFieldEnum)[keyof typeof ShoppingListScalarFieldEnum]
+
+
+export const ShoppingListItemScalarFieldEnum = {
+  id: 'id',
+  shopping_list_id: 'shopping_list_id',
+  ingredient_name: 'ingredient_name',
+  qty: 'qty',
+  unit: 'unit',
+  checked: 'checked'
+} as const
+
+export type ShoppingListItemScalarFieldEnum = (typeof ShoppingListItemScalarFieldEnum)[keyof typeof ShoppingListItemScalarFieldEnum]
+
+
+export const SortOrder = {
+  asc: 'asc',
+  desc: 'desc'
+} as const
+
+export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+} as const
+
+export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 

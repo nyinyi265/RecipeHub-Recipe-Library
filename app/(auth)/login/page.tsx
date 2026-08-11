@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +31,33 @@ function FacebookIcon({ className }: { className?: string }) {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleCredentialsSignIn(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      setError("Invalid email or password");
+      setIsLoading(false);
+    } else {
+      router.push("/dashboard");
+    }
+  }
 
   async function handleGoogleSignIn() {
     await signOut({ redirect: false });
@@ -74,9 +101,7 @@ export default function LoginPage() {
               </div>
 
               <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                }}
+                onSubmit={handleCredentialsSignIn}
                 className="mt-8 space-y-6"
               >
                 <div>
@@ -106,7 +131,13 @@ export default function LoginPage() {
                   <Link href="/forgot-password" className="text-sm text-slate-600 underline-offset-2 hover:text-orange-600">Forgot Password?</Link>
                 </div>
 
-                <Button type="submit" className="w-full rounded-lg bg-orange-500 px-4 py-5 text-base font-semibold text-white hover:bg-orange-600">Sign In</Button>
+                {error && (
+                  <p className="text-sm text-red-500 text-center">{error}</p>
+                )}
+
+                <Button type="submit" disabled={isLoading} className="w-full rounded-lg bg-orange-500 px-4 py-5 text-base font-semibold text-white hover:bg-orange-600">
+                  {isLoading ? "Signing in..." : "Sign In"}
+                </Button>
               </form>
 
               <div className="mt-10">

@@ -17,4 +17,88 @@ import * as Prisma from './internal/prismaNamespaceBrowser'
 export { Prisma }
 export * as $Enums from './enums'
 export * from './enums';
-
+/**
+ * Model User
+ * 
+ */
+export type User = Prisma.UserModel
+/**
+ * Model Account
+ * 
+ */
+export type Account = Prisma.AccountModel
+/**
+ * Model Session
+ * 
+ */
+export type Session = Prisma.SessionModel
+/**
+ * Model VerificationToken
+ * 
+ */
+export type VerificationToken = Prisma.VerificationTokenModel
+/**
+ * Model Authenticator
+ * WebAuthn authenticator for passkey-based authentication.
+ */
+export type Authenticator = Prisma.AuthenticatorModel
+/**
+ * Model Category
+ * 
+ */
+export type Category = Prisma.CategoryModel
+/**
+ * Model Cuisine
+ * 
+ */
+export type Cuisine = Prisma.CuisineModel
+/**
+ * Model Recipe
+ * 
+ */
+export type Recipe = Prisma.RecipeModel
+/**
+ * Model RecipeIngredient
+ * 
+ */
+export type RecipeIngredient = Prisma.RecipeIngredientModel
+/**
+ * Model RecipeStep
+ * 
+ */
+export type RecipeStep = Prisma.RecipeStepModel
+/**
+ * Model Tag
+ * 
+ */
+export type Tag = Prisma.TagModel
+/**
+ * Model Collection
+ * 
+ */
+export type Collection = Prisma.CollectionModel
+/**
+ * Model MealPlan
+ * 
+ */
+export type MealPlan = Prisma.MealPlanModel
+/**
+ * Model MealType
+ * 
+ */
+export type MealType = Prisma.MealTypeModel
+/**
+ * Model MealPlanItem
+ * 
+ */
+export type MealPlanItem = Prisma.MealPlanItemModel
+/**
+ * Model ShoppingList
+ * 
+ */
+export type ShoppingList = Prisma.ShoppingListModel
+/**
+ * Model ShoppingListItem
+ * 
+ */
+export type ShoppingListItem = Prisma.ShoppingListItemModel

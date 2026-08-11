@@ -45,6 +45,9 @@ export const callbacks: Partial<CallbacksOptions> = {
    * Controls redirect behavior after sign in / sign out.
    */
   async redirect({ url, baseUrl }) {
+    // Guard against a stale/self-reinforcing callback-url cookie pointing at a
+    // dead /login/success path. Send the user to the dashboard instead.
+    if (url.includes("/login/success")) return `${baseUrl}/dashboard`;
     if (url.startsWith("/")) return `${baseUrl}${url}`;
     if (new URL(url).origin === baseUrl) return url;
     return baseUrl;

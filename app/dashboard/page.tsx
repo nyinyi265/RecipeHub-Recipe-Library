@@ -1,22 +1,22 @@
+import { FeaturedCategories } from "@/components/dashboard/featured-categories";
+import { HeroSection } from "@/components/dashboard/hero-section";
+import { Testimonials } from "@/components/dashboard/testimonials";
+import { TrendingRecipes } from "@/components/dashboard/trending-recipes";
+import { Footer } from "@/components/layout/footer";
 import { requireAuth } from "@/lib/auth/session";
-import { SignOutButton } from "@/components/layout/sign-out-button";
 
 export default async function DashboardPage() {
   const session = await requireAuth();
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-white">
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-          Welcome{session.user?.name ? `, ${session.user.name}` : ""}
-        </h1>
-        {session.user?.email && (
-          <p className="text-sm text-slate-500">{session.user.email}</p>
-        )}
-        <div className="pt-4">
-          <SignOutButton />
-        </div>
-      </div>
-    </main>
+    <div className="flex min-h-screen flex-col bg-white">
+      <main className="flex-1">
+        <HeroSection userName={session.user?.name} />
+        <FeaturedCategories />
+        <TrendingRecipes />
+        <Testimonials />
+      </main>
+      <Footer />
+    </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,11 @@ const navLinks = [
   { href: "/community", label: "Community" },
 ];
 
-export function Navbar() {
+interface NavbarProps {
+  isAuthenticated?: boolean;
+}
+
+export function Navbar({ isAuthenticated = false }: NavbarProps) {
   const pathname = usePathname();
 
   return (
@@ -48,16 +52,28 @@ export function Navbar() {
             <Search className="h-5 w-5" />
           </Button>
 
-          <Link
-            href="/login"
-            className="text-sm font-medium text-muted-foreground hover:text-orange-500 transition-colors"
-          >
-            Login
-          </Link>
+          {isAuthenticated ? (
+            <Link
+              href="/profile"
+              className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-orange-500 transition-colors"
+            >
+              <UserRound className="h-5 w-5" />
+              Profile
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-sm font-medium text-muted-foreground hover:text-orange-500 transition-colors"
+              >
+                Login
+              </Link>
 
-          <Button className="bg-orange-500 text-white hover:bg-orange-600" size="sm">
-            Signup
-          </Button>
+              <Button className="bg-orange-500 text-white hover:bg-orange-600" size="sm">
+                Signup
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>

@@ -55,7 +55,7 @@ export default function LoginPage() {
       setError("Invalid email or password");
       setIsLoading(false);
     } else {
-      router.push("/dashboard");
+      router.push("/");
     }
   }
 
@@ -63,7 +63,7 @@ export default function LoginPage() {
     await signOut({ redirect: false });
     await signIn(
       "google",
-      { callbackUrl: "/dashboard" },
+      { callbackUrl: "/" },
       { prompt: "select_account" },
     );
   }

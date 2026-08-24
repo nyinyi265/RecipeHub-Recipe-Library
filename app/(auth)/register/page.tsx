@@ -74,7 +74,7 @@ export default function RegisterPage() {
     await signOut({ redirect: false });
     await signIn(
       "google",
-      { callbackUrl: "/dashboard" },
+      { callbackUrl: "/" },
       { prompt: "select_account" },
     );
   }
@@ -145,7 +145,7 @@ export default function RegisterPage() {
         email,
         password,
         redirect: false,
-        callbackUrl: "/dashboard",
+        callbackUrl: "/",
       });
 
       if (signInResult?.error) {
@@ -156,7 +156,7 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push("/");
       router.refresh();
     } catch {
       setFormError("Something went wrong. Please try again.");

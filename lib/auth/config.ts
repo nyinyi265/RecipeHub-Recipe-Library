@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { providers } from "@/lib/auth/providers";
 import { callbacks } from "@/lib/auth/callbacks";
 import { pages } from "@/lib/auth/pages";
+import { SESSION_MAX_AGE } from "@/lib/auth/constants";
 
 /**
  * NextAuth.js core configuration.
@@ -20,6 +21,7 @@ export const authConfig: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
+    maxAge: SESSION_MAX_AGE,
   },
   // Prefer NEXTAUTH_SECRET (v4); fall back to AUTH_SECRET (Auth.js v5 naming).
   secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,

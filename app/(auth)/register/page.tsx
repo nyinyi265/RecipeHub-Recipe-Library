@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -156,6 +157,7 @@ export default function RegisterPage() {
         return;
       }
 
+      toast.success("Account created successfully! Welcome to RecipeHub.");
       router.push("/");
       router.refresh();
     } catch {

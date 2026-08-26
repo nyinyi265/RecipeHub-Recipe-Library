@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +56,7 @@ export default function LoginPage() {
       setError("Invalid email or password");
       setIsLoading(false);
     } else {
+      toast.success("Login successful! Welcome back.");
       router.push("/");
     }
   }

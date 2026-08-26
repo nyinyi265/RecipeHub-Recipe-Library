@@ -1,9 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Search, UserRound } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
+import { LogOut, Search, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -16,10 +24,18 @@ const navLinks = [
 
 interface NavbarProps {
   isAuthenticated?: boolean;
+  userName?: string | null;
 }
 
-export function Navbar({ isAuthenticated = false }: NavbarProps) {
+export function Navbar({ isAuthenticated = false, userName }: NavbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -53,23 +69,34 @@ export function Navbar({ isAuthenticated = false }: NavbarProps) {
           </Button>
 
           {isAuthenticated ? (
-            <Link
-              href="/profile"
-              className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-orange-500 transition-colors"
-            >
-              <UserRound className="h-5 w-5" />
-              Profile
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-orange-500 cursor-pointer">
+                  <UserRound className="h-5 w-5" />
+                  {userName ?? "Account"}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 size-4 cursor-pointer" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <>
               <Link
                 href="/login"
-                className="text-sm font-medium text-muted-foreground hover:text-orange-500 transition-colors"
+                className="text-sm font-medium text-muted-foreground hover:text-orange-500 transition-colors cursor-pointer"
               >
                 Login
               </Link>
 
-              <Button className="bg-orange-500 text-white hover:bg-orange-600" size="sm">
+              <Button className="bg-orange-500 text-white hover:bg-orange-600 cursor-pointer" size="sm">
                 Signup
               </Button>
             </>

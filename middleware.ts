@@ -17,5 +17,5 @@ export default withAuth({
  * All sub-paths under these routes are also protected.
  */
 export const config = {
-  matcher: ["/profile/:path*", "/settings/:path*"],
+  matcher: ["/profile/:path*", "/settings/:path*", "/recipe/:path*", "/meal-planner"],
 };

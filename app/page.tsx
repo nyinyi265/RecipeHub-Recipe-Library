@@ -11,7 +11,7 @@ export default async function HomePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <Navbar isAuthenticated={Boolean(user)} />
+      <Navbar isAuthenticated={Boolean(user)} userName={user?.name} />
       <main className="flex-1">
         <HeroSection />
         <FeaturedCategories />

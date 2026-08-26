@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Bookmark, Heart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Recipe } from "@/lib/data/recipes";
@@ -43,9 +44,11 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
           {recipe.description}
         </p>
         <div className="mt-auto flex items-center gap-2 pt-3">
-          <Button className="h-9 flex-1 rounded-md bg-orange-600 text-sm text-white hover:bg-orange-700">
-            Quick View
-          </Button>
+          <Link href={`/recipe/${recipe.id}/details`} className="flex-1">
+            <Button className="h-9 w-full rounded-md bg-orange-600 text-sm text-white hover:bg-orange-700 cursor-pointer">
+              Quick View
+            </Button>
+          </Link>
           <Button
             type="button"
             variant="outline"

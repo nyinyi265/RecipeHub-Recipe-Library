@@ -13,7 +13,7 @@ export default async function RecipePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#F6F5F2]">
-      <Navbar isAuthenticated={Boolean(user)} />
+      <Navbar isAuthenticated={Boolean(user)} userName={user?.name} />
       <main className="flex-1">
         <RecipeDiscover />
       </main>

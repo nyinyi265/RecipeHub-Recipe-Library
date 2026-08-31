@@ -50,6 +50,7 @@ export default function LoginPage() {
       email,
       password,
       redirect: false,
+      callbackUrl: "/auth/redirect",
     });
 
     if (result?.error) {
@@ -57,7 +58,9 @@ export default function LoginPage() {
       setIsLoading(false);
     } else {
       toast.success("Login successful! Welcome back.");
-      router.push("/");
+      // Use the URL from the result which points to /auth/redirect
+      // The /auth/redirect page handles role-based routing server-side
+      window.location.href = result?.url || "/auth/redirect";
     }
   }
 
@@ -65,7 +68,7 @@ export default function LoginPage() {
     await signOut({ redirect: false });
     await signIn(
       "google",
-      { callbackUrl: "/" },
+      { callbackUrl: "/auth/redirect" },
       { prompt: "select_account" },
     );
   }

@@ -75,7 +75,7 @@ export default function RegisterPage() {
     await signOut({ redirect: false });
     await signIn(
       "google",
-      { callbackUrl: "/" },
+      { callbackUrl: "/auth/redirect" },
       { prompt: "select_account" },
     );
   }
@@ -146,7 +146,7 @@ export default function RegisterPage() {
         email,
         password,
         redirect: false,
-        callbackUrl: "/",
+        callbackUrl: "/auth/redirect",
       });
 
       if (signInResult?.error) {
@@ -158,8 +158,7 @@ export default function RegisterPage() {
       }
 
       toast.success("Account created successfully! Welcome to RecipeHub.");
-      router.push("/");
-      router.refresh();
+      window.location.href = signInResult?.url || "/auth/redirect";
     } catch {
       setFormError("Something went wrong. Please try again.");
     } finally {

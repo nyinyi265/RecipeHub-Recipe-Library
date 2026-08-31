@@ -26,6 +26,7 @@ export const callbacks: Partial<CallbacksOptions> = {
       token.name = user.name;
       token.email = user.email;
       token.picture = user.image;
+      token.role = (user as { role?: string }).role;
     }
 
     // Sliding expiry: extend the token's expiration on every request so the
@@ -44,6 +45,7 @@ export const callbacks: Partial<CallbacksOptions> = {
       session.user.name = token.name;
       session.user.email = token.email;
       session.user.image = token.picture as string | null | undefined;
+      session.user.role = token.role as string;
     }
     return session;
   },

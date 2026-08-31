@@ -54,6 +54,7 @@ export const providers: Provider[] = [
         email: user.email,
         name: user.name,
         image: user.image,
+        role: user.role,
       };
     },
   }),

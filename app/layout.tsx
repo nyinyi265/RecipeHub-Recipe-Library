@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "next-themes";
-import { Toaster } from "@/components/ui/sonner";
+import Script from "next/script";
+import { ThemeProvider } from "./providers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,11 +30,27 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+(function(){
+  try {
+    var t = localStorage.getItem('theme') || 'system';
+    var d = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    var r = t === 'system' ? d : t;
+    document.documentElement.classList.add(r);
+    document.documentElement.style.colorScheme = r;
+  } catch(e) {}
+})();
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
-          <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
-          {children}
-          <Toaster />
-        </ThemeProvider>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

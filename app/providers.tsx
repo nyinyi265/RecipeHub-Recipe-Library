@@ -18,7 +18,7 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  theme: "system",
+  theme: "light",
   resolvedTheme: "light",
   setTheme: () => {},
 })
@@ -36,8 +36,8 @@ function resolveTheme(theme: Theme): "light" | "dark" {
 }
 
 function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "system"
-  return (localStorage.getItem("theme") as Theme) || "system"
+  if (typeof window === "undefined") return "light"
+  return (localStorage.getItem("theme") as Theme) || "light"
 }
 
 function applyThemeToDom(resolved: "light" | "dark") {

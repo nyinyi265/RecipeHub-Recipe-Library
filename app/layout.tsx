@@ -38,7 +38,7 @@ export default function RootLayout({
             __html: `
 (function(){
   try {
-    var t = localStorage.getItem('theme') || 'system';
+    var t = localStorage.getItem('theme') || 'light';
     var d = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     var r = t === 'system' ? d : t;
     document.documentElement.classList.add(r);

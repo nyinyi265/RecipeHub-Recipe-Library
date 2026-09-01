@@ -127,4 +127,7 @@
   html {
     @apply font-sans;
   }
+  input[type="checkbox"] {
+    accent-color: oklch(0.7 0.19 55);
+  }
 }

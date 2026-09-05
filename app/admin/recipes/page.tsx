@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import {
   Search,
   Plus,
@@ -253,10 +254,13 @@ export default function AdminRecipesPage() {
             View, moderate, and manage all recipes on the platform.
           </p>
         </div>
-        <Button className="gap-2 bg-orange-500 text-white hover:bg-orange-600">
+        <Link
+          href="/admin/recipes/create"
+          className="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600"
+        >
           <Plus className="h-4 w-4" />
           Create New Recipe
-        </Button>
+        </Link>
       </div>
 
       {/* Filters */}

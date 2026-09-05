@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Star, Clock, Users, Flame } from "lucide-react";
+import { Star, Clock, Users, Flame, ChefHat, Bookmark } from "lucide-react";
 
 interface RecipeDetailHeroProps {
   title: string;
@@ -83,6 +83,17 @@ export function RecipeDetailHero({
         </div>
 
         <p className="text-sm leading-relaxed text-slate-600">{description}</p>
+
+        <div className="flex items-center gap-3 mt-2">
+          <button className="flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-medium text-white hover:bg-orange-600 transition-colors cursor-pointer shadow-sm">
+            <ChefHat className="size-4" />
+            Start Cooking
+          </button>
+          <button className="flex items-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+            <Bookmark className="size-4" />
+            Save Recipe
+          </button>
+        </div>
       </div>
     </section>
   );

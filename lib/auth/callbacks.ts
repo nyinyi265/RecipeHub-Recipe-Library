@@ -57,8 +57,26 @@ export const callbacks: Partial<CallbacksOptions> = {
     // Guard against a stale/self-reinforcing callback-url cookie pointing at a
     // dead /login/success path. Send the user to the dashboard instead.
     if (url.includes("/login/success")) return `${baseUrl}/`;
-    if (url.startsWith("/")) return `${baseUrl}${url}`;
-    if (new URL(url).origin === baseUrl) return url;
+
+    // If the url is a relative path, resolve it against baseUrl but strip any
+    // callbackUrl query parameter that NextAuth may have appended.
+    if (url.startsWith("/")) {
+      const parsed = new URL(url, baseUrl);
+      parsed.searchParams.delete("callbackUrl");
+      return parsed.pathname + parsed.search;
+    }
+
+    // If the url is on the same origin, allow it (also strip callbackUrl).
+    try {
+      const parsed = new URL(url);
+      if (parsed.origin === baseUrl) {
+        parsed.searchParams.delete("callbackUrl");
+        return parsed.pathname + parsed.search;
+      }
+    } catch {
+      // fall through
+    }
+
     return baseUrl;
   },
 };

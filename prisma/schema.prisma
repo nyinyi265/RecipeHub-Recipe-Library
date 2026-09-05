@@ -95,18 +95,23 @@ model Cuisine {
 model Recipe {
   id                 String             @id @default(cuid())
   title              String             @db.VarChar(255)
-  slug               String
+  slug               String             @default("")
   description        String?
-  cover_image        String             @db.VarChar(255)
-  prep_time          DateTime           @db.Time(0)
-  cook_time          DateTime           @db.Time(0)
-  total_time         DateTime           @db.Time(0)
-  servings           Int
+  cover_image        String?            @db.VarChar(255)
+  category           String?
+  prep_time          DateTime?          @db.Time(0)
+  cook_time          DateTime?          @db.Time(0)
+  total_time         DateTime?          @db.Time(0)
+  servings           Int                @default(1)
   difficulty         Difficulty
-  Calories           Int
-  Protein            Int
-  Carbs              Int
-  Fat                Int
+  status             RecipeStatus       @default(DRAFT)
+  featured           Boolean            @default(false)
+  search_visibility  Boolean            @default(true)
+  allow_comments     Boolean            @default(true)
+  Calories           Int                @default(0)
+  Protein            Int                @default(0)
+  Carbs              Int                @default(0)
+  Fat                Int                @default(0)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   meal_plan_items    MealPlanItem[]
@@ -123,6 +128,7 @@ model RecipeIngredient {
   qty           Int
   unit          String
   notes         String?
+  group_name    String?
   display_order Int
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -130,16 +136,16 @@ model RecipeIngredient {
 }
 
 model RecipeStep {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   recipe_id   String
   step_no     Int
   instruction String
   image_url   String?
-  timer_min   DateTime @db.Time(0)
-  voice_text  String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  recipe      Recipe   @relation(fields: [recipe_id], references: [id])
+  timer_min   DateTime? @db.Time(0)
+  voice_text  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  recipe      Recipe    @relation(fields: [recipe_id], references: [id])
 }
 
 model Tag {
@@ -224,7 +230,12 @@ enum UserRole {
 
 enum Difficulty {
   EASY
-  MEDIUM
-  HARD
-  EXTREME
+  INTERMEDIATE
+  EXPERT
+}
+
+enum RecipeStatus {
+  DRAFT
+  PUBLISHED
+  PRIVATE
 }

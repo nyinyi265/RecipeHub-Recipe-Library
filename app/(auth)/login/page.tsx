@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -35,6 +35,8 @@ export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isFacebookLoading, setIsFacebookLoading] = useState(false);
   const [error, setError] = useState("");
 
   async function handleCredentialsSignIn(e: React.FormEvent<HTMLFormElement>) {
@@ -65,12 +67,18 @@ export default function LoginPage() {
   }
 
   async function handleGoogleSignIn() {
+    setIsGoogleLoading(true);
     await signOut({ redirect: false });
     await signIn(
       "google",
       { callbackUrl: "/auth/redirect" },
       { prompt: "select_account" },
     );
+  }
+
+  async function handleFacebookSignIn() {
+    setIsFacebookLoading(true);
+    await signIn("facebook", { callbackUrl: "/auth/redirect" });
   }
 
   return (
@@ -151,13 +159,21 @@ export default function LoginPage() {
                   <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-xs uppercase tracking-[0.28em] text-slate-400">or continue with</span>
                 </div>
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                  <Button variant="outline" onClick={handleGoogleSignIn} className="flex items-center justify-center gap-2 py-5 rounded-xl bg-white text-slate-900 border-1 border-orange-200 cursor-pointer hover:bg-slate-50">
-                    <GoogleIcon className="h-4 w-4" />
-                    Google
+                  <Button variant="outline" onClick={handleGoogleSignIn} disabled={isGoogleLoading} className="flex items-center justify-center gap-2 py-5 rounded-xl bg-white text-slate-900 border-1 border-orange-200 cursor-pointer hover:bg-slate-50">
+                    {isGoogleLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <GoogleIcon className="h-4 w-4" />
+                    )}
+                    {isGoogleLoading ? "Redirecting..." : "Google"}
                   </Button>
-                  <Button variant="outline" className="flex items-center justify-center gap-2 py-5 rounded-xl bg-white text-slate-900 border-1 border-orange-200 cursor-pointer hover:bg-slate-50">
-                    <FacebookIcon className="h-4 w-4" />
-                    Facebook
+                  <Button variant="outline" onClick={handleFacebookSignIn} disabled={isFacebookLoading} className="flex items-center justify-center gap-2 py-5 rounded-xl bg-white text-slate-900 border-1 border-orange-200 cursor-pointer hover:bg-slate-50">
+                    {isFacebookLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <FacebookIcon className="h-4 w-4" />
+                    )}
+                    {isFacebookLoading ? "Redirecting..." : "Facebook"}
                   </Button>
                 </div>
               </div>

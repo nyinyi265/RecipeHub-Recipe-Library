@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock, User, Globe, ImageUp } from "lucide-react";
+import { Mail, Lock, User, Globe, ImageUp, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
   Select,
@@ -70,14 +70,22 @@ export default function RegisterPage() {
   const [profileError, setProfileError] = useState("");
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isFacebookLoading, setIsFacebookLoading] = useState(false);
 
   async function handleGoogleSignIn() {
+    setIsGoogleLoading(true);
     await signOut({ redirect: false });
     await signIn(
       "google",
       { callbackUrl: "/auth/redirect" },
       { prompt: "select_account" },
     );
+  }
+
+  async function handleFacebookSignIn() {
+    setIsFacebookLoading(true);
+    await signIn("facebook", { callbackUrl: "/auth/redirect" });
   }
 
   const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
@@ -385,17 +393,28 @@ export default function RegisterPage() {
                   <Button
                     variant="outline"
                     onClick={handleGoogleSignIn}
+                    disabled={isGoogleLoading}
                     className="flex items-center justify-center gap-2 py-5 rounded-xl bg-white text-slate-900 border-1 border-orange-200 cursor-pointer hover:bg-slate-50"
                   >
-                    <GoogleIcon className="h-4 w-4" />
-                    Google
+                    {isGoogleLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <GoogleIcon className="h-4 w-4" />
+                    )}
+                    {isGoogleLoading ? "Redirecting..." : "Google"}
                   </Button>
                   <Button
                     variant="outline"
+                    onClick={handleFacebookSignIn}
+                    disabled={isFacebookLoading}
                     className="flex items-center justify-center gap-2 py-5 rounded-xl bg-white text-slate-900 border-1 border-orange-200 cursor-pointer hover:bg-slate-50"
                   >
-                    <FacebookIcon className="h-4 w-4" />
-                    Facebook
+                    {isFacebookLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <FacebookIcon className="h-4 w-4" />
+                    )}
+                    {isFacebookLoading ? "Redirecting..." : "Facebook"}
                   </Button>
                 </div>
               </div>

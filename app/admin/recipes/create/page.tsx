@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   ChevronRight,
   Save,
@@ -17,6 +18,7 @@ import {
   Pencil,
   CircleCheck,
 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 
 const steps = [
@@ -59,7 +61,9 @@ interface IngredientGroup {
 }
 
 export default function CreateRecipePage() {
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [recipeName, setRecipeName] = useState("")
   const [description, setDescription] = useState("")
   const [category, setCategory] = useState("")
@@ -159,6 +163,67 @@ export default function CreateRecipePage() {
           : g
       )
     )
+  }
+
+  async function handleSubmit(recipeStatus: "draft" | "published" | "private") {
+    if (!recipeName.trim()) {
+      toast.error("Recipe name is required.")
+      setCurrentStep(1)
+      return
+    }
+
+    if (instructions.length === 0 || instructions.every((i) => !i.text.trim())) {
+      toast.error("At least one instruction is required.")
+      setCurrentStep(3)
+      return
+    }
+
+    if (ingredientGroups.length === 0 || ingredientGroups.every((g) => g.ingredients.length === 0)) {
+      toast.error("At least one ingredient is required.")
+      setCurrentStep(2)
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch("/api/recipes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: recipeName,
+          description: description || undefined,
+          category: category || undefined,
+          difficulty,
+          status: recipeStatus,
+          featured,
+          searchVisibility,
+          allowComments,
+          instructions: instructions.filter((i) => i.text.trim()),
+          ingredientGroups: ingredientGroups.map((g) => ({
+            ...g,
+            ingredients: g.ingredients.filter((ing) => ing.name.trim()),
+          })),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create recipe.")
+      }
+
+      toast.success(
+        recipeStatus === "published"
+          ? "Recipe published successfully!"
+          : "Recipe saved as draft."
+      )
+      router.push("/admin/recipes")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Something went wrong.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -719,11 +784,19 @@ export default function CreateRecipePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <button className="flex items-center justify-center gap-2 w-full rounded-lg bg-orange-500 py-2.5 text-sm font-medium text-white hover:bg-orange-600 transition-colors cursor-pointer">
-                    Publish Recipe
+                  <button
+                    onClick={() => handleSubmit("published")}
+                    disabled={isSubmitting}
+                    className="flex items-center justify-center gap-2 w-full rounded-lg bg-orange-500 py-2.5 text-sm font-medium text-white hover:bg-orange-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? "Publishing..." : "Publish Recipe"}
                   </button>
-                  <button className="flex items-center justify-center gap-2 w-full rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                    Save Draft & Exit
+                  <button
+                    onClick={() => handleSubmit("draft")}
+                    disabled={isSubmitting}
+                    className="flex items-center justify-center gap-2 w-full rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? "Saving..." : "Save Draft & Exit"}
                   </button>
                   <button className="flex items-center justify-center w-full py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors cursor-pointer">
                     Cancel
@@ -858,9 +931,14 @@ export default function CreateRecipePage() {
               {currentStep === 4 ? "Back to Instructions" : currentStep === 5 ? "Back to Visuals" : "Previous Step"}
             </Button>
           )}
-          <Button variant="outline" className="gap-2 cursor-pointer">
+          <Button
+            variant="outline"
+            className="gap-2 cursor-pointer"
+            onClick={() => handleSubmit("draft")}
+            disabled={isSubmitting}
+          >
             <Save className="h-4 w-4" />
-            Save Draft
+            {isSubmitting ? "Saving..." : "Save Draft"}
           </Button>
           {currentStep === 5 && (
             <Button variant="outline" className="gap-2 cursor-pointer" asChild>

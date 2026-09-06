@@ -166,6 +166,7 @@ export async function createRecipe(input: CreateRecipeInput) {
   const recipeSteps = input.instructions.map((instruction, index) => ({
     step_no: index + 1,
     instruction: instruction.text,
+    image_url: instruction.imageUrl || null,
   }));
 
   // Create recipe with all related data using nested creates
@@ -174,6 +175,7 @@ export async function createRecipe(input: CreateRecipeInput) {
       title: input.title,
       slug,
       description: input.description || null,
+      cover_image: input.coverImage || null,
       difficulty: mapDifficulty(input.difficulty),
       status: mapStatus(input.status),
       featured: input.featured,

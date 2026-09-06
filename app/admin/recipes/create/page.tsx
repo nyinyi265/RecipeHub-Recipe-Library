@@ -81,6 +81,28 @@ export default function CreateRecipePage() {
   ])
 
   const [stepImages, setStepImages] = useState<Record<string, string | null>>({})
+  const [heroImage, setHeroImage] = useState<string | null>(null)
+  const [galleryImages, setGalleryImages] = useState<string[]>([])
+
+  function handleHeroImageChange(file: File | null) {
+    if (heroImage) URL.revokeObjectURL(heroImage)
+    if (file) {
+      setHeroImage(URL.createObjectURL(file))
+    } else {
+      setHeroImage(null)
+    }
+  }
+
+  function handleGalleryImageAdd(file: File) {
+    if (galleryImages.length >= 4) return
+    const url = URL.createObjectURL(file)
+    setGalleryImages((prev) => [...prev, url])
+  }
+
+  function handleGalleryImageRemove(index: number) {
+    URL.revokeObjectURL(galleryImages[index])
+    setGalleryImages((prev) => prev.filter((_, i) => i !== index))
+  }
 
   function handleStepImageChange(stepId: string, file: File | null) {
     if (file) {
@@ -172,22 +194,26 @@ export default function CreateRecipePage() {
     )
   }
 
-  async function handleSubmit(recipeStatus: "draft" | "published" | "private") {
+  async function handleSubmit(recipeStatus: "published" | "private") {
     if (!recipeName.trim()) {
       toast.error("Recipe name is required.")
       setCurrentStep(1)
       return
     }
 
-    if (instructions.length === 0 || instructions.every((i) => !i.text.trim())) {
-      toast.error("At least one instruction is required.")
-      setCurrentStep(3)
+    const hasValidIngredient = ingredientGroups.some((g) =>
+      g.ingredients.some((ing) => ing.name.trim())
+    )
+    if (!hasValidIngredient) {
+      toast.error("At least one ingredient with a name is required.")
+      setCurrentStep(2)
       return
     }
 
-    if (ingredientGroups.length === 0 || ingredientGroups.every((g) => g.ingredients.length === 0)) {
-      toast.error("At least one ingredient is required.")
-      setCurrentStep(2)
+    const hasValidInstruction = instructions.some((i) => i.text.trim())
+    if (!hasValidInstruction) {
+      toast.error("At least one instruction is required.")
+      setCurrentStep(3)
       return
     }
 
@@ -206,7 +232,11 @@ export default function CreateRecipePage() {
           featured,
           searchVisibility,
           allowComments,
-          instructions: instructions.filter((i) => i.text.trim()),
+          coverImage: heroImage || undefined,
+          instructions: instructions.filter((i) => i.text.trim()).map((i) => ({
+            ...i,
+            imageUrl: stepImages[i.id] || undefined,
+          })),
           ingredientGroups: ingredientGroups.map((g) => ({
             ...g,
             ingredients: g.ingredients.filter((ing) => ing.name.trim()),
@@ -232,6 +262,12 @@ export default function CreateRecipePage() {
       setIsSubmitting(false)
     }
   }
+
+  const isStep1Valid = recipeName.trim().length > 0
+  const isStep2Valid = ingredientGroups.some((g) =>
+    g.ingredients.some((ing) => ing.name.trim())
+  )
+  const isStep3Valid = instructions.some((i) => i.text.trim())
 
   return (
     <div className="flex flex-col h-full">
@@ -315,6 +351,9 @@ export default function CreateRecipePage() {
                       placeholder="e.g. Classic Margherita Pizza"
                       className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
                     />
+                    {currentStep === 1 && !isStep1Valid && (
+                      <p className="text-xs text-red-500 mt-1">Recipe name is required.</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -383,6 +422,9 @@ export default function CreateRecipePage() {
                   Organize ingredients into logical sections (e.g., &quot;For the Dough&quot;, &quot;For the
                   Filling&quot;) to make the recipe easier to follow.
                 </p>
+                {!isStep2Valid && (
+                  <p className="text-xs text-red-500 mb-4">At least one ingredient with a name is required.</p>
+                )}
 
                 <div className="space-y-4">
                   {ingredientGroups.map((group) => (
@@ -512,6 +554,9 @@ export default function CreateRecipePage() {
                   Break down the cooking process into clear, manageable steps. You
                   can add images to help users visualize the process.
                 </p>
+                {!isStep3Valid && (
+                  <p className="text-xs text-red-500 mb-4">At least one instruction is required.</p>
+                )}
 
                 <div className="space-y-4">
                   {instructions.map((step, index) => (
@@ -598,17 +643,43 @@ export default function CreateRecipePage() {
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Hero Image
                   </label>
-                  <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50/50 py-12 hover:border-orange-400 transition-colors cursor-pointer">
-                    <div className="text-center">
-                      <Upload className="h-8 w-8 mx-auto text-slate-400 mb-2" />
-                      <p className="text-sm text-slate-600">
-                        Click to upload or drag and drop
-                      </p>
-                      <p className="text-xs text-slate-400 mt-1">
-                        PNG, JPG or WEBP (max. 5MB)
-                      </p>
+                  {heroImage ? (
+                    <div className="relative inline-block">
+                      <img
+                        src={heroImage}
+                        alt="Hero preview"
+                        className="w-full max-h-64 rounded-lg object-cover border border-slate-200"
+                      />
+                      <button
+                        onClick={() => handleHeroImageChange(null)}
+                        className="absolute top-2 right-2 h-7 w-7 rounded-full bg-red-500 text-white flex items-center justify-center text-sm hover:bg-red-600"
+                      >
+                        ✕
+                      </button>
                     </div>
-                  </div>
+                  ) : (
+                    <label className="flex items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50/50 py-12 hover:border-orange-400 transition-colors cursor-pointer">
+                      <div className="text-center">
+                        <Upload className="h-8 w-8 mx-auto text-slate-400 mb-2" />
+                        <p className="text-sm text-slate-600">
+                          Click to upload or drag and drop
+                        </p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          PNG, JPG or WEBP (max. 5MB)
+                        </p>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] ?? null
+                          handleHeroImageChange(file)
+                          e.target.value = ""
+                        }}
+                      />
+                    </label>
+                  )}
                 </div>
 
                 {/* Secondary Images */}
@@ -617,12 +688,39 @@ export default function CreateRecipePage() {
                     <label className="block text-sm font-medium text-slate-700">
                       Secondary Images (Gallery)
                     </label>
-                    <span className="text-xs text-slate-400">0/4 images</span>
+                    <span className="text-xs text-slate-400">{galleryImages.length}/4 images</span>
                   </div>
                   <div className="grid grid-cols-4 gap-3">
-                    <button className="flex items-center justify-center aspect-square rounded-lg border-2 border-dashed border-slate-300 bg-slate-50/50 hover:border-orange-400 hover:bg-orange-50/50 transition-colors cursor-pointer">
-                      <Plus className="h-6 w-6 text-slate-400" />
-                    </button>
+                    {galleryImages.map((url, index) => (
+                      <div key={url} className="relative aspect-square">
+                        <img
+                          src={url}
+                          alt={`Gallery ${index + 1}`}
+                          className="w-full h-full rounded-lg object-cover border border-slate-200"
+                        />
+                        <button
+                          onClick={() => handleGalleryImageRemove(index)}
+                          className="absolute top-1 right-1 h-5 w-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                    {galleryImages.length < 4 && (
+                      <label className="flex items-center justify-center aspect-square rounded-lg border-2 border-dashed border-slate-300 bg-slate-50/50 hover:border-orange-400 hover:bg-orange-50/50 transition-colors cursor-pointer">
+                        <Plus className="h-6 w-6 text-slate-400" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) handleGalleryImageAdd(file)
+                            e.target.value = ""
+                          }}
+                        />
+                      </label>
+                    )}
                   </div>
                 </div>
               </>
@@ -819,17 +917,17 @@ export default function CreateRecipePage() {
                 <div className="space-y-3">
                   <button
                     onClick={() => handleSubmit("published")}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !isStep1Valid || !isStep2Valid || !isStep3Valid}
                     className="flex items-center justify-center gap-2 w-full rounded-lg bg-orange-500 py-2.5 text-sm font-medium text-white hover:bg-orange-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? "Publishing..." : "Publish Recipe"}
                   </button>
                   <button
-                    onClick={() => handleSubmit("draft")}
-                    disabled={isSubmitting}
+                    onClick={() => handleSubmit("private")}
+                    disabled={isSubmitting || !isStep1Valid || !isStep2Valid || !isStep3Valid}
                     className="flex items-center justify-center gap-2 w-full rounded-lg border border-slate-200 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? "Saving..." : "Save Draft & Exit"}
+                    {isSubmitting ? "Saving..." : "Save as Private"}
                   </button>
                   <button
                     onClick={() => router.push("/admin/recipes")}
@@ -971,7 +1069,12 @@ export default function CreateRecipePage() {
           )}
           {currentStep < 5 && (
             <Button
-              className="gap-2 bg-orange-500 text-white hover:bg-orange-600 cursor-pointer"
+              className="gap-2 bg-orange-500 text-white hover:bg-orange-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={
+                (currentStep === 1 && !isStep1Valid) ||
+                (currentStep === 2 && !isStep2Valid) ||
+                (currentStep === 3 && !isStep3Valid)
+              }
               onClick={() => setCurrentStep((s) => Math.min(s + 1, 5))}
             >
               {currentStep === 4 ? "Next: Review & Publish" : "Next Step"}

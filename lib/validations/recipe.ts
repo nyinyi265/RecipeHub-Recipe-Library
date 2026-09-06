@@ -20,12 +20,14 @@ const ingredientGroupSchema = z.object({
 const instructionSchema = z.object({
   id: z.string(),
   text: z.string().min(1, "Instruction is required"),
+  imageUrl: z.string().optional(),
 });
 
 export const createRecipeSchema = z.object({
   title: z.string().trim().min(1, "Recipe name is required").max(255),
   description: z.string().max(200).optional(),
   category: z.string().optional(),
+  coverImage: z.string().optional(),
   difficulty: z.enum(difficultyValues).default("Easy"),
   status: z.enum(statusValues).default("draft"),
   featured: z.boolean().default(false),

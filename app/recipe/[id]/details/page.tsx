@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getRecipeById } from "@/services/recipe/recipe.service";
 import { RecipeDetailHero } from "@/components/recipe-detail/recipe-detail-hero";
+import { IngredientsList } from "@/components/recipe-detail/ingredients-list";
 import { RatingsReviews } from "@/components/recipe-detail/ratings-reviews";
 import { PreparationSteps } from "@/components/recipe-detail/preparation-steps";
 import { CommunityFeedback } from "@/components/recipe-detail/community-feedback";
@@ -45,15 +46,51 @@ export default async function RecipeDetailPage({
       number: step.step_no,
       title: `Step ${step.step_no}`,
       description: step.instruction,
-      image: step.image_url || "/images/login.png",
+      image: step.image_url || "",
     })) || [];
+
+  const ingredients =
+    recipe.recipe_ingredients?.map((ing) => ({
+      id: ing.id,
+      name: ing.name,
+      qty: ing.qty,
+      unit: ing.unit,
+      notes: ing.notes,
+      group_name: ing.group_name,
+    })) || [];
+
+  const categoryName = recipe.categories?.[0]?.name || null;
 
   return (
     <div className="flex min-h-screen flex-col bg-[#F6F5F2]">
       <Navbar isAuthenticated={Boolean(user)} userName={user?.name} />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6 lg:px-8">
         <div className="space-y-12">
+          {/* Category & Difficulty Badge */}
+          <div className="flex flex-wrap items-center gap-2">
+            {categoryName && (
+              <span className="inline-flex items-center rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
+                {categoryName}
+              </span>
+            )}
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+              {recipe.difficulty}
+            </span>
+            {recipe.featured && (
+              <span className="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
+                Featured
+              </span>
+            )}
+          </div>
+
           <RecipeDetailHero {...heroProps} />
+
+          {ingredients.length > 0 && (
+            <IngredientsList ingredients={ingredients} />
+          )}
+
+          <PreparationSteps steps={steps.filter((s) => s.description)} />
+
           <RatingsReviews
             overallRating={4.8}
             totalReviews={0}
@@ -67,7 +104,7 @@ export default async function RecipeDetailPage({
             categoryRatings={[]}
             reviews={[]}
           />
-          <PreparationSteps steps={steps} />
+
           <CommunityFeedback feedbacks={[]} />
         </div>
       </main>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import {
@@ -10,12 +10,6 @@ import {
   List,
   Download,
   Star,
-  ChevronLeft,
-  ChevronRight,
-  MoreHorizontal,
-  Eye,
-  Pencil,
-  Trash2,
 } from "lucide-react"
 import {
   Table,
@@ -39,146 +33,20 @@ interface AdminRecipe {
   id: string
   title: string
   slug: string
-  coverImage: string
-  author: {
-    name: string
-    image: string | null
-  }
+  cover_image: string | null
   category: string
-  views: number
-  rating: number
-  status: "Active" | "Pending" | "Flagged"
+  status: "DRAFT" | "PUBLISHED" | "PRIVATE"
+  Calories: number
+  difficulty: string
+  createdAt: string
+  categories: { name: string }[]
 }
-
-const adminRecipes: AdminRecipe[] = [
-  {
-    id: "RCP-001",
-    title: "Creamy Tomato Basil Soup",
-    slug: "creamy-tomato-basil-soup",
-    coverImage:
-      "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=100&q=80",
-    author: {
-      name: "Sarah Jenkins",
-      image: null,
-    },
-    category: "Dinner",
-    views: 12450,
-    rating: 4.8,
-    status: "Active",
-  },
-  {
-    id: "RCP-002",
-    title: "Rustic Artisan Sourdough",
-    slug: "rustic-artisan-sourdough",
-    coverImage:
-      "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=100&q=80",
-    author: {
-      name: "Mike Baker",
-      image: null,
-    },
-    category: "Baking",
-    views: 3120,
-    rating: 4.5,
-    status: "Pending",
-  },
-  {
-    id: "RCP-003",
-    title: "Spicy Tuna Poke Bowl",
-    slug: "spicy-tuna-poke-bowl",
-    coverImage:
-      "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=100&q=80",
-    author: {
-      name: "David Kim",
-      image: null,
-    },
-    category: "Lunch",
-    views: 8900,
-    rating: 4.9,
-    status: "Flagged",
-  },
-  {
-    id: "RCP-004",
-    title: "Glazed Atlantic Salmon Bowl",
-    slug: "glazed-atlantic-salmon-bowl",
-    coverImage:
-      "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=100&q=80",
-    author: {
-      name: "Emily Chen",
-      image: null,
-    },
-    category: "Dinner",
-    views: 15230,
-    rating: 4.8,
-    status: "Active",
-  },
-  {
-    id: "RCP-005",
-    title: "Spiced Chickpea Power Bowl",
-    slug: "spiced-chickpea-power-bowl",
-    coverImage:
-      "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=100&q=80",
-    author: {
-      name: "Priya Sharma",
-      image: null,
-    },
-    category: "Lunch",
-    views: 9870,
-    rating: 4.9,
-    status: "Active",
-  },
-  {
-    id: "RCP-006",
-    title: "Traditional Carbonara",
-    slug: "traditional-carbonara",
-    coverImage:
-      "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=100&q=80",
-    author: {
-      name: "Marco Rossi",
-      image: null,
-    },
-    category: "Dinner",
-    views: 18400,
-    rating: 4.7,
-    status: "Active",
-  },
-  {
-    id: "RCP-007",
-    title: "Thai Green Curry",
-    slug: "thai-green-curry",
-    coverImage:
-      "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=100&q=80",
-    author: {
-      name: "Nina Patel",
-      image: null,
-    },
-    category: "Dinner",
-    views: 11200,
-    rating: 4.7,
-    status: "Pending",
-  },
-  {
-    id: "RCP-008",
-    title: "Artisan Margherita Pizza",
-    slug: "artisan-margherita-pizza",
-    coverImage:
-      "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=100&q=80",
-    author: {
-      name: "Luca Romano",
-      image: null,
-    },
-    category: "Dinner",
-    views: 21500,
-    rating: 4.9,
-    status: "Active",
-  },
-]
-
-const categories = ["All Categories", "Dinner", "Lunch", "Baking", "Breakfast", "Dessert"]
-const statuses = ["All Statuses", "Active", "Pending", "Flagged"]
 
 const ITEMS_PER_PAGE = 5
 
 export default function AdminRecipesPage() {
+  const [recipes, setRecipes] = useState<AdminRecipe[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [category, setCategory] = useState("All Categories")
   const [status, setStatus] = useState("All Statuses")
@@ -186,18 +54,46 @@ export default function AdminRecipesPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
 
+  useEffect(() => {
+    async function fetchRecipes() {
+      try {
+        const res = await fetch("/api/recipes?type=all")
+        const data = await res.json()
+        if (data.success) {
+          setRecipes(data.recipes)
+        }
+      } catch (error) {
+        console.error("Failed to fetch recipes:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchRecipes()
+  }, [])
+
+  const categories = useMemo(() => {
+    const cats = new Set<string>(["All Categories"])
+    recipes.forEach((r) => {
+      r.categories?.forEach((c) => cats.add(c.name))
+    })
+    return Array.from(cats)
+  }, [recipes])
+
+  const statuses = ["All Statuses", "PUBLISHED", "DRAFT", "PRIVATE"]
+
   const filteredRecipes = useMemo(() => {
-    return adminRecipes.filter((recipe) => {
+    return recipes.filter((recipe) => {
       const matchesSearch = recipe.title
         .toLowerCase()
         .includes(search.toLowerCase())
       const matchesCategory =
-        category === "All Categories" || recipe.category === category
+        category === "All Categories" ||
+        recipe.categories?.some((c) => c.name === category)
       const matchesStatus =
         status === "All Statuses" || recipe.status === status
       return matchesSearch && matchesCategory && matchesStatus
     })
-  }, [search, category, status])
+  }, [search, category, status, recipes])
 
   const totalPages = Math.ceil(filteredRecipes.length / ITEMS_PER_PAGE)
   const paginatedRecipes = filteredRecipes.slice(
@@ -231,15 +127,48 @@ export default function AdminRecipesPage() {
 
   const statusVariant = (status: string) => {
     switch (status) {
-      case "Active":
+      case "PUBLISHED":
         return "default"
-      case "Pending":
+      case "DRAFT":
         return "secondary"
-      case "Flagged":
+      case "PRIVATE":
         return "destructive"
       default:
         return "outline"
     }
+  }
+
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case "PUBLISHED":
+        return "Published"
+      case "DRAFT":
+        return "Draft"
+      case "PRIVATE":
+        return "Private"
+      default:
+        return status
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              Recipe Management
+            </h1>
+            <p className="text-sm text-slate-500">Loading recipes...</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-16 animate-pulse rounded-lg bg-slate-100" />
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -311,7 +240,7 @@ export default function AdminRecipesPage() {
           <SelectContent>
             {statuses.map((s) => (
               <SelectItem key={s} value={s}>
-                {s}
+                {s === "All Statuses" ? s : statusLabel(s)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -365,16 +294,13 @@ export default function AdminRecipesPage() {
                 Recipe Name
               </TableHead>
               <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Author
-              </TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Category
               </TableHead>
               <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Views
+                Difficulty
               </TableHead>
               <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Rating
+                Calories
               </TableHead>
               <TableHead className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Status
@@ -398,71 +324,53 @@ export default function AdminRecipesPage() {
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-slate-100">
-                      <Image
-                        src={recipe.coverImage}
-                        alt={recipe.title}
-                        fill
-                        className="object-cover"
-                      />
+                      {recipe.cover_image ? (
+                        <Image
+                          src={recipe.cover_image}
+                          alt={recipe.title}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                          N/A
+                        </div>
+                      )}
                     </div>
                     <div>
                       <p className="font-medium text-slate-900">
                         {recipe.title}
                       </p>
-                      <p className="text-xs text-slate-400">{recipe.id}</p>
+                      <p className="text-xs text-slate-400">{recipe.id.slice(0, 8)}</p>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600">
-                      {recipe.author.image ? (
-                        <Image
-                          src={recipe.author.image}
-                          alt={recipe.author.name}
-                          width={28}
-                          height={28}
-                          className="h-full w-full rounded-full object-cover"
-                        />
-                      ) : (
-                        recipe.author.name.charAt(0)
-                      )}
-                    </div>
-                    <span className="text-sm text-slate-700">
-                      {recipe.author.name}
-                    </span>
-                  </div>
+                  <Badge variant="outline">
+                    {recipe.categories?.[0]?.name || recipe.category || "Uncategorized"}
+                  </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline">{recipe.category}</Badge>
+                  <span className="text-sm text-slate-600">
+                    {recipe.difficulty}
+                  </span>
                 </TableCell>
                 <TableCell className="text-sm text-slate-600">
-                  {recipe.views.toLocaleString()}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    <span className="text-sm font-medium text-slate-700">
-                      {recipe.rating}
-                    </span>
-                  </div>
+                  {recipe.Calories}
                 </TableCell>
                 <TableCell>
                   <Badge variant={statusVariant(recipe.status)}>
-                    {recipe.status}
+                    {statusLabel(recipe.status)}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
-                    <button className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    <button className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <Link
+                      href={`/recipe/${recipe.id}/details`}
+                      className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                    >
+                      <Star className="h-4 w-4" />
+                    </Link>
                   </div>
                 </TableCell>
               </TableRow>
@@ -470,43 +378,54 @@ export default function AdminRecipesPage() {
           </TableBody>
         </Table>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-          <p className="text-sm text-slate-500">
-            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
-            {Math.min(currentPage * ITEMS_PER_PAGE, filteredRecipes.length)} of{" "}
-            {filteredRecipes.length} entries
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="rounded px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
-            >
-              Previous
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`h-8 w-8 rounded text-sm font-medium transition-colors ${
-                  currentPage === page
-                    ? "bg-orange-500 text-white"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="rounded px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
-            >
-              Next
-            </button>
+        {filteredRecipes.length === 0 && (
+          <div className="py-12 text-center">
+            <p className="font-semibold text-slate-900">No recipes found</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Create your first recipe to get started.
+            </p>
           </div>
-        </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+            <p className="text-sm text-slate-500">
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredRecipes.length)} of{" "}
+              {filteredRecipes.length} entries
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="rounded px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
+              >
+                Previous
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`h-8 w-8 rounded text-sm font-medium transition-colors ${
+                    currentPage === page
+                      ? "bg-orange-500 text-white"
+                      : "text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="rounded px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

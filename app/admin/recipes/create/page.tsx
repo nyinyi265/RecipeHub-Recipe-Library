@@ -76,13 +76,20 @@ export default function CreateRecipePage() {
   const [instructions, setInstructions] = useState([
     {
       id: "1",
-      text: "Preheat your oven to 375\u00B0F (190\u00B0C). Lightly grease a large baking dish with olive oil or non-stick spray.",
-    },
-    {
-      id: "2",
-      text: "In a medium bowl, whisk together the olive oil, minced garlic, dried oregano, and a pinch of salt and pepper.",
+      text: "",
     },
   ])
+
+  const [stepImages, setStepImages] = useState<Record<string, string | null>>({})
+
+  function handleStepImageChange(stepId: string, file: File | null) {
+    if (file) {
+      const url = URL.createObjectURL(file)
+      setStepImages((prev) => ({ ...prev, [stepId]: url }))
+    } else {
+      setStepImages((prev) => ({ ...prev, [stepId]: null }))
+    }
+  }
 
   const addInstruction = () => {
     setInstructions([
@@ -102,9 +109,9 @@ export default function CreateRecipePage() {
   const [ingredientGroups, setIngredientGroups] = useState<IngredientGroup[]>([
     {
       id: "1",
-      name: "Main Dish",
+      name: "Main Ingredients",
       ingredients: [
-        { id: "1", qty: "2", unit: "lbs", name: "Chicken", prepNotes: "Boneless" },
+        { id: "1", qty: "", unit: "g", name: "", prepNotes: "" },
       ],
     },
   ])
@@ -524,10 +531,36 @@ export default function CreateRecipePage() {
                             rows={3}
                             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400 resize-none"
                           />
-                          <button className="flex items-center gap-1.5 mt-2 text-sm font-medium text-orange-500 hover:text-orange-600 transition-colors cursor-pointer">
-                            <ImagePlus className="h-4 w-4" />
-                            Add Step Image
-                          </button>
+                          {stepImages[step.id] ? (
+                            <div className="mt-2 relative inline-block">
+                              <img
+                                src={stepImages[step.id]!}
+                                alt={`Step ${index + 1} preview`}
+                                className="h-24 w-24 rounded-lg object-cover border border-slate-200"
+                              />
+                              <button
+                                onClick={() => handleStepImageChange(step.id, null)}
+                                className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs hover:bg-red-600"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="flex items-center gap-1.5 mt-2 text-sm font-medium text-orange-500 hover:text-orange-600 transition-colors cursor-pointer">
+                              <ImagePlus className="h-4 w-4" />
+                              Add Step Image
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0] ?? null
+                                  handleStepImageChange(step.id, file)
+                                  e.target.value = ""
+                                }}
+                              />
+                            </label>
+                          )}
                         </div>
                         <button
                           onClick={() => removeInstruction(step.id)}
@@ -798,7 +831,10 @@ export default function CreateRecipePage() {
                   >
                     {isSubmitting ? "Saving..." : "Save Draft & Exit"}
                   </button>
-                  <button className="flex items-center justify-center w-full py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors cursor-pointer">
+                  <button
+                    onClick={() => router.push("/admin/recipes")}
+                    className="flex items-center justify-center w-full py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors cursor-pointer"
+                  >
                     Cancel
                   </button>
                 </div>
@@ -914,12 +950,7 @@ export default function CreateRecipePage() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200">
-        <button className="flex items-center gap-2 text-sm text-slate-500 hover:text-red-600 transition-colors cursor-pointer mb-10">
-          <Trash2 className="h-4 w-4" />
-          Discard Draft
-        </button>
-
+      <div className="flex items-center justify-end mt-8 pt-6 border-t border-slate-200">
         <div className="flex items-center gap-3 mb-10">
           {currentStep > 1 && (
             <Button
@@ -931,15 +962,6 @@ export default function CreateRecipePage() {
               {currentStep === 4 ? "Back to Instructions" : currentStep === 5 ? "Back to Visuals" : "Previous Step"}
             </Button>
           )}
-          <Button
-            variant="outline"
-            className="gap-2 cursor-pointer"
-            onClick={() => handleSubmit("draft")}
-            disabled={isSubmitting}
-          >
-            <Save className="h-4 w-4" />
-            {isSubmitting ? "Saving..." : "Save Draft"}
-          </Button>
           {currentStep === 5 && (
             <Button variant="outline" className="gap-2 cursor-pointer" asChild>
               <Link href="/admin/recipes/preview" target="_blank">

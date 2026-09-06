@@ -1,3 +1,6 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import {
   Users,
   UtensilsCrossed,
@@ -9,23 +12,47 @@ import {
   AlertCircle,
   Database,
   Megaphone,
-} from "lucide-react";
+} from "lucide-react"
+
+interface ModerationRecipe {
+  id: string
+  title: string
+  slug: string
+  cover_image: string | null
+  status: "DRAFT" | "PUBLISHED" | "PRIVATE"
+  createdAt: string
+}
 
 export default function AdminDashboardPage() {
+  const [moderationQueue, setModerationQueue] = useState<ModerationRecipe[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchPending() {
+      try {
+        const res = await fetch("/api/recipes?type=all")
+        const data = await res.json()
+        if (data.success) {
+          // Show non-published recipes in moderation queue
+          const pending = data.recipes.filter(
+            (r: ModerationRecipe) => r.status !== "PUBLISHED"
+          )
+          setModerationQueue(pending.slice(0, 5))
+        }
+      } catch (error) {
+        console.error("Failed to fetch pending recipes:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchPending()
+  }, [])
+
   const stats = [
     {
-      label: "TOTAL ACTIVE USERS",
-      value: "124.5k",
-      trend: "+12% from last week",
-      trendUp: true,
-      icon: Users,
-      iconBg: "bg-green-100",
-      iconColor: "text-green-600",
-    },
-    {
-      label: "NEW RECIPES TODAY",
-      value: "842",
-      trend: "+18% from yesterday",
+      label: "TOTAL RECIPES",
+      value: moderationQueue.length.toString(),
+      trend: "From database",
       trendUp: true,
       icon: UtensilsCrossed,
       iconBg: "bg-orange-100",
@@ -33,78 +60,53 @@ export default function AdminDashboardPage() {
     },
     {
       label: "PENDING MODERATION",
-      value: "156",
-      trend: "Requires immediate attention",
+      value: moderationQueue.length.toString(),
+      trend: moderationQueue.length > 0 ? "Requires attention" : "All clear",
       trendUp: false,
-      warning: true,
+      warning: moderationQueue.length > 0,
       icon: AlertTriangle,
       iconBg: "bg-red-100",
       iconColor: "text-red-600",
     },
     {
+      label: "TOTAL ACTIVE USERS",
+      value: "--",
+      trend: "Coming soon",
+      trendUp: true,
+      icon: Users,
+      iconBg: "bg-green-100",
+      iconColor: "text-green-600",
+    },
+    {
       label: "PLATFORM TRAFFIC",
-      value: "1.2M",
-      trend: "+2.4% over 24h",
+      value: "--",
+      trend: "Coming soon",
       trendUp: true,
       icon: TrendingUp,
       iconBg: "bg-blue-100",
       iconColor: "text-blue-600",
     },
-  ];
-
-  const moderationQueue = [
-    {
-      name: "Rustic Tomato Basil Pasta",
-      id: "#RC - 8923",
-      author: "@chef_mario",
-      submitted: "10 mins ago",
-      status: "Pending",
-      image: "/images/login.png",
-    },
-    {
-      name: "Morning Energy Smoothie Bowl",
-      id: "#RC - 8922",
-      author: "@healthy_living",
-      submitted: "45 mins ago",
-      status: "Flagged",
-      image: "/images/login.png",
-    },
-    {
-      name: "Perfectly Seared Ribeye",
-      id: "#RC - 8921",
-      author: "@grillmaster_j",
-      submitted: "1 hour ago",
-      status: "Pending",
-      image: "/images/login.png",
-    },
-  ];
+  ]
 
   const alerts = [
     {
-      title: "High Copyright Flag Rate",
-      description: "Automated DMCA scanner flagged 14 recipes in the last 4 hours.",
-      time: "10 mins ago",
-      icon: AlertCircle,
-      iconBg: "bg-red-100",
-      iconColor: "text-red-500",
-    },
-    {
-      title: "Database Backup Complete",
-      description: "Daily snapshot to AWS S3 completed successfully.",
-      time: "2 hours ago",
+      title: "System Ready",
+      description: "Recipe management system is active and operational.",
+      time: "Now",
       icon: Database,
       iconBg: "bg-green-100",
       iconColor: "text-green-500",
     },
-    {
-      title: "Marketing Campaign Live",
-      description: "Summer Grilling featured collection is now live on consumer frontend.",
-      time: "5 hours ago",
-      icon: Megaphone,
-      iconBg: "bg-blue-100",
-      iconColor: "text-blue-500",
-    },
-  ];
+  ]
+
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case "PUBLISHED": return "Published"
+      case "DRAFT": return "Pending"
+      case "PRIVATE": return "Flagged"
+      default: return status
+    }
+  }
 
   return (
     <div>
@@ -166,69 +168,85 @@ export default function AdminDashboardPage() {
             <h2 className="text-lg font-semibold text-slate-900">
               Recipe Moderation Queue
             </h2>
-            <button className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900">
+            <a
+              href="/admin/recipes"
+              className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900"
+            >
               View All <ArrowUpRight className="h-4 w-4" />
-            </button>
+            </a>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  <th className="px-6 py-3">Recipe Name</th>
-                  <th className="px-6 py-3">Author</th>
-                  <th className="px-6 py-3">Submitted</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {moderationQueue.map((recipe) => (
-                  <tr
-                    key={recipe.id}
-                    className="border-b border-slate-50 last:border-0 hover:bg-slate-50"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 overflow-hidden rounded-lg bg-slate-100">
-                          <img
-                            src={recipe.image}
-                            alt={recipe.name}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900">{recipe.name}</p>
-                          <p className="text-xs text-slate-500">{recipe.id}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
-                      {recipe.author}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
-                      {recipe.submitted}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          recipe.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {recipe.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <button className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
+            {loading ? (
+              <div className="space-y-3 p-6">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-14 animate-pulse rounded-lg bg-slate-100" />
                 ))}
-              </tbody>
-            </table>
+              </div>
+            ) : moderationQueue.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="font-medium text-slate-900">No pending recipes</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  All recipes have been reviewed.
+                </p>
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    <th className="px-6 py-3">Recipe Name</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {moderationQueue.map((recipe) => (
+                    <tr
+                      key={recipe.id}
+                      className="border-b border-slate-50 last:border-0 hover:bg-slate-50"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 overflow-hidden rounded-lg bg-slate-100">
+                            {recipe.cover_image ? (
+                              <img
+                                src={recipe.cover_image}
+                                alt={recipe.title}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                                N/A
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium text-slate-900">{recipe.title}</p>
+                            <p className="text-xs text-slate-500">{recipe.id.slice(0, 8)}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            recipe.status === "DRAFT"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {statusLabel(recipe.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 

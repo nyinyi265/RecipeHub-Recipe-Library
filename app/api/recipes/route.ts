@@ -3,11 +3,50 @@ import { ZodError } from "zod";
 
 import { requireAuth } from "@/lib/auth/session";
 import { createRecipeSchema } from "@/lib/validations/recipe";
-import { createRecipe } from "@/services/recipe/recipe.service";
+import {
+  createRecipe,
+  getAllRecipes,
+  getPublishedRecipes,
+  getTrendingRecipes,
+} from "@/services/recipe/recipe.service";
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get("type");
+
+    let recipes;
+
+    if (type === "trending") {
+      const limit = parseInt(searchParams.get("limit") ?? "4", 10);
+      recipes = await getTrendingRecipes(limit);
+    } else if (type === "all") {
+      // Admin: require auth
+      const session = await requireAuth();
+      if (session.user?.role !== "ADMIN") {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 403 }
+        );
+      }
+      recipes = await getAllRecipes();
+    } else {
+      // Public: published only
+      recipes = await getPublishedRecipes();
+    }
+
+    return NextResponse.json({ success: true, recipes });
+  } catch (error) {
+    console.error("Fetch recipes error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch recipes." },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(request: Request) {
   try {
-    // Require admin authentication
     const session = await requireAuth();
     if (session.user?.role !== "ADMIN") {
       return NextResponse.json(

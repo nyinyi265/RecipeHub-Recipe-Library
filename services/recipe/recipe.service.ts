@@ -37,14 +37,103 @@ function generateSlug(title: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+// ─── Fetch Functions ─────────────────────────────────────────────────────────
+
+/**
+ * Returns all published recipes with their categories, for the public discover page.
+ */
+export async function getPublishedRecipes() {
+  return prisma.recipe.findMany({
+    where: { status: "PUBLISHED" },
+    include: { categories: true },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+/**
+ * Returns all recipes for the admin list page (any status).
+ */
+export async function getAllRecipes() {
+  return prisma.recipe.findMany({
+    include: {
+      categories: true,
+      recipe_ingredients: true,
+      recipe_steps: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+/**
+ * Returns a single recipe by ID with all relations.
+ */
+export async function getRecipeById(id: string) {
+  return prisma.recipe.findUnique({
+    where: { id },
+    include: {
+      categories: true,
+      recipe_ingredients: { orderBy: { display_order: "asc" } },
+      recipe_steps: { orderBy: { step_no: "asc" } },
+    },
+  });
+}
+
+/**
+ * Returns a single recipe by slug with all relations.
+ */
+export async function getRecipeBySlug(slug: string) {
+  return prisma.recipe.findUnique({
+    where: { slug },
+    include: {
+      categories: true,
+      recipe_ingredients: { orderBy: { display_order: "asc" } },
+      recipe_steps: { orderBy: { step_no: "asc" } },
+    },
+  });
+}
+
+/**
+ * Returns published recipes for the trending section (top rated).
+ */
+export async function getTrendingRecipes(limit = 4) {
+  return prisma.recipe.findMany({
+    where: { status: "PUBLISHED" },
+    include: { categories: true },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+}
+
+/**
+ * Returns all categories.
+ */
+export async function getAllCategories() {
+  return prisma.category.findMany({
+    orderBy: { name: "asc" },
+  });
+}
+
+/**
+ * Returns recipes pending moderation (non-published).
+ */
+export async function getPendingRecipes() {
+  return prisma.recipe.findMany({
+    where: { status: { not: "PUBLISHED" } },
+    include: { categories: true },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+// ─── Create ──────────────────────────────────────────────────────────────────
+
 /**
  * Creates a new recipe with all related data (ingredients, steps, category).
- * Uses nested creates for efficiency within a single transaction.
+ * Uses nested creates for efficiency.
  */
 export async function createRecipe(input: CreateRecipeInput) {
   const slug = generateSlug(input.title);
 
-  // Find or create the category (outside transaction for speed)
+  // Find or create the category
   let categoryId: string | undefined;
   if (input.category) {
     const existingCategory = await prisma.category.findUnique({
@@ -90,17 +179,14 @@ export async function createRecipe(input: CreateRecipeInput) {
       featured: input.featured,
       search_visibility: input.searchVisibility,
       allow_comments: input.allowComments,
-      // Connect category if it exists
       ...(categoryId && {
         categories: {
           connect: { id: categoryId },
         },
       }),
-      // Create ingredients directly linked to the recipe
       recipe_ingredients: {
         create: allIngredients,
       },
-      // Create steps directly linked to the recipe
       recipe_steps: {
         create: recipeSteps,
       },

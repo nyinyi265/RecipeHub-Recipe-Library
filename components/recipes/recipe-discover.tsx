@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState, useMemo } from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,32 +11,47 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  RECIPES_PER_PAGE,
-  recipes,
-  type Recipe,
-} from "@/lib/data/recipes";
+import { RECIPES_PER_PAGE, type Recipe } from "@/lib/data/recipes";
 import {
   FiltersSidebar,
   initialFilters,
   type FilterState,
 } from "@/components/recipes/filters-sidebar";
 import { RecipeCard } from "@/components/recipes/recipe-card";
-import { useMemo, useState } from "react";
 
 export function RecipeDiscover() {
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
   const [appliedFilters, setAppliedFilters] =
     useState<FilterState>(initialFilters);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("popular");
   const [page, setPage] = useState(1);
 
+  useEffect(() => {
+    async function fetchRecipes() {
+      try {
+        const res = await fetch("/api/recipes");
+        const data = await res.json();
+        if (data.success) {
+          setRecipes(data.recipes);
+        }
+      } catch (error) {
+        console.error("Failed to fetch recipes:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchRecipes();
+  }, []);
+
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     const result = recipes.filter((recipe) => {
       if (
         appliedFilters.cuisine.length > 0 &&
-        !appliedFilters.cuisine.includes(recipe.cuisine)
+        recipe.category &&
+        !appliedFilters.cuisine.includes(recipe.category)
       ) {
         return false;
       }
@@ -45,38 +61,51 @@ export function RecipeDiscover() {
       ) {
         return false;
       }
-      if (
-        appliedFilters.dietary.length > 0 &&
-        !appliedFilters.dietary.every((diet) => recipe.dietary.includes(diet))
-      ) {
-        return false;
-      }
-      if (recipe.time > appliedFilters.maxTime) return false;
-      if (recipe.calories > appliedFilters.maxCalories) return false;
       if (query && !recipe.title.toLowerCase().includes(query)) return false;
       return true;
     });
 
     switch (sortBy) {
       case "top-rated":
-        return [...result].sort((a, b) => b.rating - a.rating);
+        return [...result].sort((a, b) => b.Calories - a.Calories);
       case "quickest":
-        return [...result].sort((a, b) => a.time - b.time);
+        return result;
       default:
-        return [...result].sort((a, b) => b.reviews - a.reviews);
+        return [...result].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
     }
-  }, [appliedFilters, search, sortBy]);
+  }, [appliedFilters, search, sortBy, recipes]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / RECIPES_PER_PAGE));
   const currentPage = Math.min(page, totalPages);
   const visibleRecipes = filtered.slice(
     (currentPage - 1) * RECIPES_PER_PAGE,
-    currentPage * RECIPES_PER_PAGE,
+    currentPage * RECIPES_PER_PAGE
   );
 
   function handleSearch(value: string) {
     setSearch(value);
     setPage(1);
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+          <div className="h-96 animate-pulse rounded-xl bg-slate-100" />
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-72 animate-pulse rounded-xl bg-slate-100"
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -169,7 +198,9 @@ export function RecipeDiscover() {
                     variant="outline"
                     size="icon"
                     aria-label={`Page ${pageNumber}`}
-                    aria-current={pageNumber === currentPage ? "page" : undefined}
+                    aria-current={
+                      pageNumber === currentPage ? "page" : undefined
+                    }
                     onClick={() => setPage(pageNumber)}
                     className={
                       pageNumber === currentPage
@@ -179,7 +210,7 @@ export function RecipeDiscover() {
                   >
                     {pageNumber}
                   </Button>
-                ),
+                )
               )}
               <Button
                 type="button"

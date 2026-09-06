@@ -1,62 +1,41 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Heart, Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
-const recipes = [
-  {
-    title: "Creamy Pasta Carbonara",
-    difficulty: "Easy",
-    rating: 4.8,
-    reviews: 82,
-    timeAgo: "2 hrs",
-    author: "Elena Rossi",
-    image:
-      "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=800&q=80",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80",
-  },
-  {
-    title: "Garden Veggie Pizza",
-    difficulty: "Easy",
-    rating: 4.7,
-    reviews: 64,
-    timeAgo: "5 hrs",
-    author: "Marcus Chen",
-    image:
-      "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80",
-    avatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80",
-  },
-  {
-    title: "Herb-Crusted Salmon",
-    difficulty: "Easy",
-    rating: 4.9,
-    reviews: 91,
-    timeAgo: "1 day",
-    author: "Sofia Alvarez",
-    image:
-      "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=800&q=80",
-    avatar:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=100&q=80",
-  },
-  {
-    title: "Fluffy Berry Pancakes",
-    difficulty: "Easy",
-    rating: 4.6,
-    reviews: 47,
-    timeAgo: "2 days",
-    author: "James Park",
-    image:
-      "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=800&q=80",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80",
-  },
-];
+interface TrendingRecipe {
+  id: string;
+  title: string;
+  difficulty: string;
+  cover_image: string | null;
+  Calories: number;
+  categories: { name: string }[];
+}
 
 export function TrendingRecipes() {
+  const [recipes, setRecipes] = useState<TrendingRecipe[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchTrending() {
+      try {
+        const res = await fetch("/api/recipes?type=trending&limit=4");
+        const data = await res.json();
+        if (data.success) {
+          setRecipes(data.recipes);
+        }
+      } catch (error) {
+        console.error("Failed to fetch trending recipes:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTrending();
+  }, []);
+
   function scroll(direction: "left" | "right") {
     const scroller = document.getElementById("trending-scroller");
     if (!scroller) return;
@@ -64,6 +43,51 @@ export function TrendingRecipes() {
       left: direction === "left" ? -320 : 320,
       behavior: "smooth",
     });
+  }
+
+  const difficultyLabel = (d: string) => {
+    if (d === "EASY") return "Easy";
+    if (d === "INTERMEDIATE") return "Intermediate";
+    return "Expert";
+  };
+
+  if (loading) {
+    return (
+      <section id="trending" className="bg-white pb-16">
+        <div className="mx-auto w-full max-w-6xl px-6">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+              Trending This Week
+            </h2>
+          </div>
+          <div className="flex gap-5">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-72 w-[280px] shrink-0 animate-pulse rounded-xl bg-slate-100"
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (recipes.length === 0) {
+    return (
+      <section id="trending" className="bg-white pb-16">
+        <div className="mx-auto w-full max-w-6xl px-6">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+              Trending This Week
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              No recipes available yet.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -108,19 +132,25 @@ export function TrendingRecipes() {
         >
           {recipes.map((recipe) => (
             <article
-              key={recipe.title}
+              key={recipe.id}
               className="w-[85%] shrink-0 snap-start overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-100 sm:w-[280px] lg:w-[calc(25%-0.95rem)]"
             >
               <div className="relative aspect-[4/3] overflow-hidden">
-                <Image
-                  src={recipe.image}
-                  alt={recipe.title}
-                  fill
-                  sizes="(min-width:1024px) 25vw, 50vw"
-                  className="object-cover"
-                />
+                {recipe.cover_image ? (
+                  <Image
+                    src={recipe.cover_image}
+                    alt={recipe.title}
+                    fill
+                    sizes="(min-width:1024px) 25vw, 50vw"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-slate-100 text-slate-400">
+                    No Image
+                  </div>
+                )}
                 <span className="absolute left-3 top-3 rounded-full bg-[#2D6A4F] px-2.5 py-0.5 text-xs font-semibold text-white">
-                  {recipe.difficulty}
+                  {difficultyLabel(recipe.difficulty)}
                 </span>
                 <button
                   type="button"
@@ -131,26 +161,27 @@ export function TrendingRecipes() {
                 </button>
               </div>
               <div className="space-y-3 p-4">
-                <h3 className="font-semibold text-slate-900">{recipe.title}</h3>
+                <h3 className="font-semibold text-slate-900">
+                  {recipe.title}
+                </h3>
                 <div className="flex items-center gap-1.5 text-sm text-slate-500">
                   <Star className="size-4 fill-orange-500 text-orange-500" />
                   <span className="font-medium text-slate-700">
-                    {recipe.rating}
-                  </span>
-                  <span>({recipe.reviews} reviews)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Avatar size="sm">
-                    <AvatarImage src={recipe.avatar} alt={recipe.author} />
-                    <AvatarFallback>
-                      {recipe.author.slice(0, 1)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm text-slate-600">{recipe.author}</span>
-                  <span className="ml-auto text-xs text-slate-400">
-                    {recipe.timeAgo}
+                    {recipe.Calories} cal
                   </span>
                 </div>
+                {recipe.categories?.[0] && (
+                  <div className="flex items-center gap-2">
+                    <Avatar size="sm">
+                      <AvatarFallback>
+                        {recipe.categories[0].name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm text-slate-600">
+                      {recipe.categories[0].name}
+                    </span>
+                  </div>
+                )}
               </div>
             </article>
           ))}

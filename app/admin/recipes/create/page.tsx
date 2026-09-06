@@ -856,7 +856,6 @@ export default function CreateRecipePage() {
                   </label>
                   <div className="space-y-2">
                     {[
-                      { value: "draft" as Status, label: "Draft", desc: "Visible only to admins" },
                       { value: "published" as Status, label: "Published", desc: "Live and visible to everyone" },
                       { value: "private" as Status, label: "Private", desc: "Only visible via direct link" },
                     ].map((option) => (

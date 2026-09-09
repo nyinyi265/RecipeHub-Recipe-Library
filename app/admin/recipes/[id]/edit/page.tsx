@@ -1,12 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import {
   ChevronRight,
-  Save,
-  Eye,
   ArrowRight,
   ArrowLeft,
   Trash2,
@@ -14,9 +12,8 @@ import {
   Check,
   GripVertical,
   ImagePlus,
-  Upload,
-  Pencil,
   CircleCheck,
+  Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -61,8 +58,60 @@ interface IngredientGroup {
   ingredients: Ingredient[]
 }
 
-export default function CreateRecipePage() {
+interface RecipeData {
+  id: string
+  title: string
+  slug: string
+  description: string | null
+  cover_image: string | null
+  gallery_images: string[]
+  difficulty: string
+  status: string
+  featured: boolean
+  search_visibility: boolean
+  allow_comments: boolean
+  categories: { name: string }[]
+  recipe_ingredients: {
+    id: string
+    name: string
+    qty: number
+    unit: string
+    notes: string | null
+    group_name: string
+    display_order: number
+  }[]
+  recipe_steps: {
+    id: string
+    step_no: number
+    instruction: string
+    image_url: string | null
+  }[]
+}
+
+function mapDifficultyToFrontend(db: string): "Easy" | "Intermediate" | "Expert" {
+  const map: Record<string, "Easy" | "Intermediate" | "Expert"> = {
+    EASY: "Easy",
+    INTERMEDIATE: "Intermediate",
+    EXPERT: "Expert",
+  }
+  return map[db] ?? "Easy"
+}
+
+function mapStatusToFrontend(db: string): Status {
+  const map: Record<string, Status> = {
+    PUBLISHED: "published",
+    DRAFT: "draft",
+    PRIVATE: "private",
+  }
+  return map[db] ?? "draft"
+}
+
+export default function EditRecipePage() {
   const router = useRouter()
+  const params = useParams()
+  const recipeId = params.id as string
+
+  const [loading, setLoading] = useState(true)
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [recipeName, setRecipeName] = useState("")
@@ -75,15 +124,98 @@ export default function CreateRecipePage() {
   const [allowComments, setAllowComments] = useState(true)
 
   const [instructions, setInstructions] = useState([
-    {
-      id: "1",
-      text: "",
-    },
+    { id: "1", text: "" },
   ])
 
   const [stepImages, setStepImages] = useState<Record<string, string | null>>({})
   const [heroImage, setHeroImage] = useState<string | null>(null)
   const [galleryImages, setGalleryImages] = useState<string[]>([])
+
+  const [ingredientGroups, setIngredientGroups] = useState<IngredientGroup[]>([
+    {
+      id: "1",
+      name: "Main Ingredients",
+      ingredients: [{ id: "1", qty: "", unit: "g", name: "", prepNotes: "" }],
+    },
+  ])
+
+  useEffect(() => {
+    async function fetchRecipe() {
+      try {
+        const res = await fetch(`/api/recipes/${recipeId}`)
+        const data = await res.json()
+        if (!data.success || !data.recipe) {
+          toast.error("Recipe not found.")
+          router.push("/admin/recipes")
+          return
+        }
+        const recipe: RecipeData = data.recipe
+
+        setRecipeName(recipe.title)
+        setDescription(recipe.description ?? "")
+        setDifficulty(mapDifficultyToFrontend(recipe.difficulty))
+        setStatus(mapStatusToFrontend(recipe.status))
+        setFeatured(recipe.featured)
+        setSearchVisibility(recipe.search_visibility)
+        setAllowComments(recipe.allow_comments)
+        setHeroImage(recipe.cover_image)
+        setGalleryImages(recipe.gallery_images ?? [])
+
+        if (recipe.categories?.[0]) {
+          setCategory(recipe.categories[0].name)
+        }
+
+        // Map ingredients into groups
+        const groupMap = new Map<string, Ingredient[]>()
+        for (const ing of recipe.recipe_ingredients) {
+          const key = ing.group_name || "Main Ingredients"
+          if (!groupMap.has(key)) groupMap.set(key, [])
+          groupMap.get(key)!.push({
+            id: ing.id,
+            qty: String(ing.qty),
+            unit: ing.unit,
+            name: ing.name,
+            prepNotes: ing.notes ?? "",
+          })
+        }
+
+        if (groupMap.size > 0) {
+          const groups: IngredientGroup[] = Array.from(groupMap.entries()).map(
+            ([name, ingredients], i) => ({
+              id: String(i + 1),
+              name,
+              ingredients,
+            })
+          )
+          setIngredientGroups(groups)
+        }
+
+        // Map instructions
+        if (recipe.recipe_steps.length > 0) {
+          const sorted = recipe.recipe_steps.sort((a, b) => a.step_no - b.step_no)
+          setInstructions(
+            sorted.map((s) => ({
+              id: s.id,
+              text: s.instruction,
+            }))
+          )
+          const imagesMap: Record<string, string | null> = {}
+          for (const s of sorted) {
+            if (s.image_url) {
+              imagesMap[s.id] = s.image_url
+            }
+          }
+          setStepImages(imagesMap)
+        }
+      } catch {
+        toast.error("Failed to load recipe.")
+        router.push("/admin/recipes")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchRecipe()
+  }, [recipeId, router])
 
   async function handleHeroImageChange(file: File | null) {
     if (file) {
@@ -126,10 +258,7 @@ export default function CreateRecipePage() {
   }
 
   const addInstruction = () => {
-    setInstructions([
-      ...instructions,
-      { id: Date.now().toString(), text: "" },
-    ])
+    setInstructions([...instructions, { id: Date.now().toString(), text: "" }])
   }
 
   const updateInstruction = (id: string, text: string) => {
@@ -140,23 +269,11 @@ export default function CreateRecipePage() {
     setInstructions(instructions.filter((i) => i.id !== id))
   }
 
-  const [ingredientGroups, setIngredientGroups] = useState<IngredientGroup[]>([
-    {
-      id: "1",
-      name: "Main Ingredients",
-      ingredients: [
-        { id: "1", qty: "", unit: "g", name: "", prepNotes: "" },
-      ],
-    },
-  ])
-
   const addIngredientGroup = () => {
     const newGroup: IngredientGroup = {
       id: Date.now().toString(),
       name: `Group ${ingredientGroups.length + 1}`,
-      ingredients: [
-        { id: Date.now().toString(), qty: "", unit: "lbs", name: "", prepNotes: "" },
-      ],
+      ingredients: [{ id: Date.now().toString(), qty: "", unit: "lbs", name: "", prepNotes: "" }],
     }
     setIngredientGroups([...ingredientGroups, newGroup])
   }
@@ -232,8 +349,8 @@ export default function CreateRecipePage() {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch("/api/recipes", {
-        method: "POST",
+      const response = await fetch(`/api/recipes/${recipeId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: recipeName,
@@ -260,14 +377,10 @@ export default function CreateRecipePage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create recipe.")
+        throw new Error(data.error || "Failed to update recipe.")
       }
 
-      toast.success(
-        recipeStatus === "published"
-          ? "Recipe published successfully!"
-          : "Recipe saved as draft."
-      )
+      toast.success("Recipe updated successfully!")
       router.push("/admin/recipes")
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Something went wrong.")
@@ -282,6 +395,21 @@ export default function CreateRecipePage() {
   )
   const isStep3Valid = instructions.some((i) => i.text.trim())
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <Link href="/admin/recipes" className="hover:text-slate-700">Recipes</Link>
+          <ChevronRight className="h-4 w-4" />
+          <span className="text-slate-900 font-medium">Edit Recipe</span>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Breadcrumb */}
@@ -290,17 +418,14 @@ export default function CreateRecipePage() {
           Recipes
         </Link>
         <ChevronRight className="h-4 w-4" />
-        <span className="text-slate-900 font-medium">Create New Recipe</span>
+        <span className="text-slate-900 font-medium">Edit Recipe</span>
       </div>
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-slate-900">
-            Create New Recipe <span className="text-orange-500">•Draft</span>
-          </h1>
-        </div>
-        <p className="text-sm text-slate-400">Saved 2 minutes ago</p>
+        <h1 className="text-2xl font-bold text-slate-900">
+          Edit Recipe <span className="text-orange-500">{recipeName}</span>
+        </h1>
       </div>
 
       {/* Step Indicator */}
@@ -364,9 +489,6 @@ export default function CreateRecipePage() {
                       placeholder="e.g. Classic Margherita Pizza"
                       className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
                     />
-                    {currentStep === 1 && !isStep1Valid && (
-                      <p className="text-xs text-red-500 mt-1">Recipe name is required.</p>
-                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -432,12 +554,8 @@ export default function CreateRecipePage() {
                   Ingredient Groups
                 </h2>
                 <p className="text-sm text-slate-500 mb-6">
-                  Organize ingredients into logical sections (e.g., &quot;For the Dough&quot;, &quot;For the
-                  Filling&quot;) to make the recipe easier to follow.
+                  Organize ingredients into logical sections.
                 </p>
-                {!isStep2Valid && (
-                  <p className="text-xs text-red-500 mb-4">At least one ingredient with a name is required.</p>
-                )}
 
                 <div className="space-y-4">
                   {ingredientGroups.map((group) => (
@@ -445,7 +563,6 @@ export default function CreateRecipePage() {
                       key={group.id}
                       className="rounded-lg border border-slate-200 bg-slate-50/50 overflow-hidden"
                     >
-                      {/* Group Header */}
                       <div className="flex items-center justify-between bg-orange-50/50 px-4 py-3 border-b border-slate-200">
                         <div className="flex items-center gap-2">
                           <GripVertical className="h-4 w-4 text-slate-400 cursor-move" />
@@ -461,7 +578,6 @@ export default function CreateRecipePage() {
                         </button>
                       </div>
 
-                      {/* Ingredient Table */}
                       <div className="p-4">
                         <table className="w-full">
                           <thead>
@@ -564,12 +680,8 @@ export default function CreateRecipePage() {
                   Step-by-Step Instructions
                 </h2>
                 <p className="text-sm text-slate-500 mb-6">
-                  Break down the cooking process into clear, manageable steps. You
-                  can add images to help users visualize the process.
+                  Break down the cooking process into clear, manageable steps.
                 </p>
-                {!isStep3Valid && (
-                  <p className="text-xs text-red-500 mb-4">At least one instruction is required.</p>
-                )}
 
                 <div className="space-y-4">
                   {instructions.map((step, index) => (
@@ -647,11 +759,9 @@ export default function CreateRecipePage() {
                   Media Management
                 </h2>
                 <p className="text-sm text-slate-500 mb-6">
-                  Upload high-quality visuals to make your recipe stand out. Recommended
-                  size: 1200x800px.
+                  Upload high-quality visuals to make your recipe stand out.
                 </p>
 
-                {/* Hero Image */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Hero Image
@@ -673,7 +783,6 @@ export default function CreateRecipePage() {
                   ) : (
                     <label className="flex items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50/50 py-12 hover:border-orange-400 transition-colors cursor-pointer">
                       <div className="text-center">
-                        <Upload className="h-8 w-8 mx-auto text-slate-400 mb-2" />
                         <p className="text-sm text-slate-600">
                           Click to upload or drag and drop
                         </p>
@@ -695,7 +804,6 @@ export default function CreateRecipePage() {
                   )}
                 </div>
 
-                {/* Secondary Images */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">
@@ -741,146 +849,69 @@ export default function CreateRecipePage() {
 
             {currentStep === 5 && (
               <>
-                {/* Review Header */}
                 <div className="flex items-center gap-3 mb-6">
                   <h2 className="text-lg font-semibold text-slate-900">
-                    Review & Publish
+                    Review & Save
                   </h2>
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 border border-green-200">
                     <CircleCheck className="h-3.5 w-3.5" />
-                    Ready for Review
+                    Ready to Save
                   </span>
-                </div>
-
-                {/* AI Validation */}
-                <div className="rounded-lg border border-green-200 bg-green-50/50 p-4 mb-6">
-                  <div className="flex items-start gap-3">
-                    <CircleCheck className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                    <div>
-                      <h3 className="text-sm font-semibold text-green-800">
-                        All Validation Checks Passed
-                      </h3>
-                      <p className="text-sm text-green-700 mt-1">
-                        Your recipe data is complete and meets all required food
-                        criteria.
-                      </p>
-                      <ul className="mt-2 space-y-1">
-                        <li className="flex items-center gap-2 text-sm text-green-700">
-                          <Check className="h-3.5 w-3.5" />
-                          High-res images provided
-                        </li>
-                        <li className="flex items-center gap-2 text-sm text-green-700">
-                          <Check className="h-3.5 w-3.5" />
-                          Instructions clearly written
-                        </li>
-                      </ul>
-                      <p className="text-xs text-slate-500 mt-2 italic">
-                        Suggestion: Add 2-3 more tags for optimal discoverability.
-                      </p>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Basics Section */}
                 <div className="rounded-lg border border-slate-200 bg-white p-5 mb-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">📝</span>
-                      <h3 className="text-base font-semibold text-slate-900">Basics</h3>
-                    </div>
-                    <button className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-orange-500 transition-colors cursor-pointer">
-                      <Pencil className="h-3.5 w-3.5" />
-                      Edit
-                    </button>
-                  </div>
-
+                  <h3 className="text-base font-semibold text-slate-900 mb-4">Basics</h3>
                   <div className="space-y-3">
                     <div>
                       <p className="text-xs text-slate-500 mb-1">Recipe Title</p>
-                      <p className="text-sm font-medium text-slate-900">Classic Beef Wellington</p>
+                      <p className="text-sm font-medium text-slate-900">{recipeName || "—"}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-xs text-slate-500 mb-1">Category</p>
                         <span className="inline-block rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
-                          Main Course
+                          {category || "Uncategorized"}
                         </span>
                       </div>
                       <div>
                         <p className="text-xs text-slate-500 mb-1">Difficulty</p>
                         <span className="inline-block rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
-                          Advanced
+                          {difficulty}
                         </span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500">⏱️</span>
-                        <span className="text-xs text-slate-500">Prep Time:</span>
-                        <span className="text-sm font-medium text-slate-900">45 mins</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500">🔥</span>
-                        <span className="text-xs text-slate-500">Cook Time:</span>
-                        <span className="text-sm font-medium text-slate-900">2h 15mins</span>
                       </div>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500 mb-1">Description</p>
-                      <p className="text-sm text-slate-700">
-                        A classic British dish consisting of a beef tenderloin coated with pâté
-                        and duxelles, wrapped in puff pastry. A show-stopping centerpiece for any
-                        holiday meal.
-                      </p>
+                      <p className="text-sm text-slate-700">{description || "—"}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Ingredients Section */}
                 <div className="rounded-lg border border-slate-200 bg-white p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">🥘</span>
-                      <h3 className="text-base font-semibold text-slate-900">Ingredients</h3>
+                  <h3 className="text-base font-semibold text-slate-900 mb-4">Ingredients</h3>
+                  {ingredientGroups.map((group) => (
+                    <div key={group.id} className="mb-3 last:mb-0">
+                      <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                        {group.name}
+                      </span>
+                      <table className="w-full text-sm mt-2">
+                        <tbody>
+                          {group.ingredients.map((ing) => (
+                            <tr key={ing.id} className="border-b border-slate-100">
+                              <td className="py-2 text-slate-900">{ing.qty} {ing.unit}</td>
+                              <td className="py-2 text-slate-900">{ing.name}</td>
+                              <td className="py-2 text-slate-500">{ing.prepNotes}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                    <button className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-orange-500 transition-colors cursor-pointer">
-                      <Pencil className="h-3.5 w-3.5" />
-                      Edit
-                    </button>
-                  </div>
-
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-xs font-medium text-slate-500 uppercase border-b border-slate-200">
-                        <th className="text-left pb-2">Qty</th>
-                        <th className="text-left pb-2">Item</th>
-                        <th className="text-left pb-2">Notes</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td colSpan={3} className="pt-3 pb-1">
-                          <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
-                            The Beef
-                          </span>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-slate-100">
-                        <td className="py-2 text-slate-900">2 lbs</td>
-                        <td className="py-2 text-slate-900">Center-cut beef tenderloin</td>
-                        <td className="py-2 text-slate-500">Trimmed</td>
-                      </tr>
-                      <tr>
-                        <td className="py-2 text-slate-900">2 tbsp</td>
-                        <td className="py-2 text-slate-900">Olive oil</td>
-                        <td className="py-2 text-slate-500">For searing</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  ))}
                 </div>
               </>
             )}
-
           </div>
         </div>
 
@@ -933,7 +964,7 @@ export default function CreateRecipePage() {
                     disabled={isSubmitting || !isStep1Valid || !isStep2Valid || !isStep3Valid}
                     className="flex items-center justify-center gap-2 w-full rounded-lg bg-orange-500 py-2.5 text-sm font-medium text-white hover:bg-orange-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? "Publishing..." : "Publish Recipe"}
+                    {isSubmitting ? "Saving..." : "Save & Publish"}
                   </button>
                   <button
                     onClick={() => handleSubmit("private")}
@@ -1072,14 +1103,6 @@ export default function CreateRecipePage() {
               {currentStep === 4 ? "Back to Instructions" : currentStep === 5 ? "Back to Visuals" : "Previous Step"}
             </Button>
           )}
-          {currentStep === 5 && (
-            <Button variant="outline" className="gap-2 cursor-pointer" asChild>
-              <Link href="/admin/recipes/preview" target="_blank">
-                <Eye className="h-4 w-4" />
-                Preview Recipe
-              </Link>
-            </Button>
-          )}
           {currentStep < 5 && (
             <Button
               className="gap-2 bg-orange-500 text-white hover:bg-orange-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1090,7 +1113,7 @@ export default function CreateRecipePage() {
               }
               onClick={() => setCurrentStep((s) => Math.min(s + 1, 5))}
             >
-              {currentStep === 4 ? "Next: Review & Publish" : "Next Step"}
+              {currentStep === 4 ? "Next: Review & Save" : "Next Step"}
               <ArrowRight className="h-4 w-4" />
             </Button>
           )}

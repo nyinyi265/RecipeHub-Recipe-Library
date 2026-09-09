@@ -8,6 +8,7 @@ import { IngredientsList } from "@/components/recipe-detail/ingredients-list";
 import { RatingsReviews } from "@/components/recipe-detail/ratings-reviews";
 import { PreparationSteps } from "@/components/recipe-detail/preparation-steps";
 import { CommunityFeedback } from "@/components/recipe-detail/community-feedback";
+import { RecipeGallery } from "@/components/recipe-detail/recipe-gallery";
 
 export const metadata = {
   title: "Recipe Details | RecipeHub",
@@ -84,6 +85,8 @@ export default async function RecipeDetailPage({
           </div>
 
           <RecipeDetailHero {...heroProps} />
+
+          <RecipeGallery images={recipe.gallery_images ?? []} />
 
           {ingredients.length > 0 && (
             <IngredientsList ingredients={ingredients} />

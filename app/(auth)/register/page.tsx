@@ -401,7 +401,7 @@ export default function RegisterPage() {
                     ) : (
                       <GoogleIcon className="h-4 w-4" />
                     )}
-                    {isGoogleLoading ? "Redirecting..." : "Google"}
+                    {!isGoogleLoading && "Google"}
                   </Button>
                   <Button
                     variant="outline"
@@ -414,7 +414,7 @@ export default function RegisterPage() {
                     ) : (
                       <FacebookIcon className="h-4 w-4" />
                     )}
-                    {isFacebookLoading ? "Redirecting..." : "Facebook"}
+                    {!isFacebookLoading && "Facebook"}
                   </Button>
                 </div>
               </div>

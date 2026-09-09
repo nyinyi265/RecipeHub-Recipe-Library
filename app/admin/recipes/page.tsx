@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { toast } from "sonner"
 import {
   Search,
   Plus,
@@ -10,6 +11,8 @@ import {
   List,
   Download,
   Star,
+  Pencil,
+  Trash2,
 } from "lucide-react"
 import {
   Table,
@@ -53,6 +56,7 @@ export default function AdminRecipesPage() {
   const [viewMode, setViewMode] = useState<"table" | "grid">("table")
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchRecipes() {
@@ -123,6 +127,22 @@ export default function AdminRecipesPage() {
       }
       return next
     })
+  }
+
+  async function handleDelete(id: string, title: string) {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/recipes/${id}`, { method: "DELETE" })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to delete recipe.")
+      setRecipes((prev) => prev.filter((r) => r.id !== id))
+      toast.success("Recipe deleted.")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Something went wrong.")
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   const statusVariant = (status: string) => {
@@ -365,6 +385,19 @@ export default function AdminRecipesPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
+                    <Link
+                      href={`/admin/recipes/${recipe.id}/edit`}
+                      className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(recipe.id, recipe.title)}
+                      disabled={deletingId === recipe.id}
+                      className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                     <Link
                       href={`/recipe/${recipe.id}/details`}
                       className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"

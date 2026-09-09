@@ -165,7 +165,7 @@ export default function LoginPage() {
                     ) : (
                       <GoogleIcon className="h-4 w-4" />
                     )}
-                    {isGoogleLoading ? "Redirecting..." : "Google"}
+                    {!isGoogleLoading && "Google"}
                   </Button>
                   <Button variant="outline" onClick={handleFacebookSignIn} disabled={isFacebookLoading} className="flex items-center justify-center gap-2 py-5 rounded-xl bg-white text-slate-900 border-1 border-orange-200 cursor-pointer hover:bg-slate-50">
                     {isFacebookLoading ? (
@@ -173,7 +173,7 @@ export default function LoginPage() {
                     ) : (
                       <FacebookIcon className="h-4 w-4" />
                     )}
-                    {isFacebookLoading ? "Redirecting..." : "Facebook"}
+                    {!isFacebookLoading && "Facebook"}
                   </Button>
                 </div>
               </div>

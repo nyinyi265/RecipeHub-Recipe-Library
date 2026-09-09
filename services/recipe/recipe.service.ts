@@ -82,7 +82,7 @@ export async function getRecipeById(id: string) {
  * Returns a single recipe by slug with all relations.
  */
 export async function getRecipeBySlug(slug: string) {
-  return prisma.recipe.findUnique({
+  return prisma.recipe.findFirst({
     where: { slug },
     include: {
       categories: true,
@@ -122,6 +122,114 @@ export async function getPendingRecipes() {
     include: { categories: true },
     orderBy: { createdAt: "desc" },
   });
+}
+
+// ─── Update ──────────────────────────────────────────────────────────────────
+
+/**
+ * Updates an existing recipe. Replaces ingredients and steps with new data.
+ */
+export async function updateRecipe(id: string, input: CreateRecipeInput) {
+  // Resolve category
+  let categoryId: string | undefined;
+  if (input.category) {
+    const existingCategory = await prisma.category.findUnique({
+      where: { name: input.category },
+    });
+    if (existingCategory) {
+      categoryId = existingCategory.id;
+    } else {
+      const newCategory = await prisma.category.create({
+        data: { name: input.category },
+      });
+      categoryId = newCategory.id;
+    }
+  }
+
+  const allIngredients = input.ingredientGroups.flatMap((group) =>
+    group.ingredients.map((ingredient, index) => ({
+      name: ingredient.name,
+      qty: parseInt(ingredient.qty, 10) || 0,
+      unit: ingredient.unit,
+      notes: ingredient.prepNotes || null,
+      group_name: group.name,
+      display_order: index,
+    }))
+  );
+
+  const recipeSteps = input.instructions.map((instruction, index) => ({
+    step_no: index + 1,
+    instruction: instruction.text,
+    image_url: instruction.imageUrl || null,
+  }));
+
+  // Fetch existing ingredients and steps to delete them
+  const existing = await prisma.recipe.findUnique({
+    where: { id },
+    include: { recipe_ingredients: true, recipe_steps: true },
+  });
+
+  // Delete orphaned ingredients and steps
+  if (existing) {
+    await prisma.recipeIngredient.deleteMany({
+      where: { id: { in: existing.recipe_ingredients.map((i) => i.id) } },
+    });
+    await prisma.recipeStep.deleteMany({
+      where: { id: { in: existing.recipe_steps.map((s) => s.id) } },
+    });
+  }
+
+  return prisma.recipe.update({
+    where: { id },
+    data: {
+      title: input.title,
+      description: input.description || null,
+      cover_image: input.coverImage || null,
+      gallery_images: input.galleryImages ?? [],
+      difficulty: mapDifficulty(input.difficulty),
+      status: mapStatus(input.status),
+      featured: input.featured,
+      search_visibility: input.searchVisibility,
+      allow_comments: input.allowComments,
+      categories: categoryId
+        ? { set: [{ id: categoryId }] }
+        : { set: [] },
+      recipe_ingredients: {
+        create: allIngredients,
+      },
+      recipe_steps: {
+        create: recipeSteps,
+      },
+    },
+    include: {
+      categories: true,
+      recipe_ingredients: true,
+      recipe_steps: true,
+    },
+  });
+}
+
+// ─── Delete ──────────────────────────────────────────────────────────────────
+
+/**
+ * Deletes a recipe and its related ingredients/steps.
+ */
+export async function deleteRecipe(id: string) {
+  const recipe = await prisma.recipe.findUnique({
+    where: { id },
+    include: { recipe_ingredients: true, recipe_steps: true },
+  });
+
+  if (recipe) {
+    await prisma.recipeIngredient.deleteMany({
+      where: { id: { in: recipe.recipe_ingredients.map((i) => i.id) } },
+    });
+    await prisma.recipeStep.deleteMany({
+      where: { id: { in: recipe.recipe_steps.map((s) => s.id) } },
+    });
+  }
+
+  return prisma.recipe.delete({ where: { id } });
 }
 
 // ─── Create ──────────────────────────────────────────────────────────────────
@@ -176,6 +284,7 @@ export async function createRecipe(input: CreateRecipeInput) {
       slug,
       description: input.description || null,
       cover_image: input.coverImage || null,
+      gallery_images: input.galleryImages ?? [],
       difficulty: mapDifficulty(input.difficulty),
       status: mapStatus(input.status),
       featured: input.featured,

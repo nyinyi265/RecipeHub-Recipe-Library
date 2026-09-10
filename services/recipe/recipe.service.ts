@@ -27,10 +27,11 @@ function mapStatus(status: string): "DRAFT" | "PUBLISHED" | "PRIVATE" {
 
 /**
  * Converts minutes to a DateTime object for @db.Time(0) fields.
+ * Uses UTC to ensure consistency with PostgreSQL TIME storage.
  */
 function minutesToTime(minutes: number): Date {
-  const date = new Date(1970, 0, 1);
-  date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
+  const date = new Date(Date.UTC(1970, 0, 1));
+  date.setUTCHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
   return date;
 }
 

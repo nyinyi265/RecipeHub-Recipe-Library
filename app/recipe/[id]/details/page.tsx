@@ -15,10 +15,18 @@ export const metadata = {
   description: "View recipe details, preparation steps, and reviews.",
 };
 
-function formatTime(time: Date | null): string {
+function formatTime(time: Date | string | null): string {
   if (!time) return "N/A";
-  const hours = time.getUTCHours();
-  const mins = time.getUTCMinutes();
+  let date: Date;
+  if (time instanceof Date) {
+    date = time;
+  } else if (time.includes("T")) {
+    date = new Date(time);
+  } else {
+    return time || "N/A";
+  }
+  const hours = date.getUTCHours();
+  const mins = date.getUTCMinutes();
   if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
   if (hours > 0) return `${hours}h`;
   if (mins > 0) return `${mins}m`;

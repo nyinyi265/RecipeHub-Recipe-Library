@@ -111,14 +111,20 @@ function mapStatusToFrontend(db: string): Status {
 
 function parseTimeToMinutes(time: Date | string | null): number {
   if (!time) return 0
+  let date: Date
   if (time instanceof Date) {
-    return time.getUTCHours() * 60 + time.getUTCMinutes()
+    date = time
+  } else if (time.includes("T")) {
+    date = new Date(time)
+  } else {
+    // Handle "HH:MM:SS" strings
+    const parts = time.split(":")
+    if (parts.length >= 2) {
+      return parseInt(parts[0]) * 60 + parseInt(parts[1])
+    }
+    return 0
   }
-  const parts = time.split(":")
-  if (parts.length >= 2) {
-    return parseInt(parts[0]) * 60 + parseInt(parts[1])
-  }
-  return 0
+  return date.getUTCHours() * 60 + date.getUTCMinutes()
 }
 
 export default function EditRecipePage() {

@@ -14,6 +14,7 @@ import {
   ImagePlus,
   CircleCheck,
   Loader2,
+  Pencil,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -65,6 +66,8 @@ interface RecipeData {
   description: string | null
   cover_image: string | null
   gallery_images: string[]
+  prep_time: string | null
+  cook_time: string | null
   difficulty: string
   status: string
   featured: boolean
@@ -106,6 +109,18 @@ function mapStatusToFrontend(db: string): Status {
   return map[db] ?? "draft"
 }
 
+function parseTimeToMinutes(time: Date | string | null): number {
+  if (!time) return 0
+  if (time instanceof Date) {
+    return time.getUTCHours() * 60 + time.getUTCMinutes()
+  }
+  const parts = time.split(":")
+  if (parts.length >= 2) {
+    return parseInt(parts[0]) * 60 + parseInt(parts[1])
+  }
+  return 0
+}
+
 export default function EditRecipePage() {
   const router = useRouter()
   const params = useParams()
@@ -130,6 +145,8 @@ export default function EditRecipePage() {
   const [stepImages, setStepImages] = useState<Record<string, string | null>>({})
   const [heroImage, setHeroImage] = useState<string | null>(null)
   const [galleryImages, setGalleryImages] = useState<string[]>([])
+  const [prepTime, setPrepTime] = useState<number>(0)
+  const [cookTime, setCookTime] = useState<number>(0)
 
   const [ingredientGroups, setIngredientGroups] = useState<IngredientGroup[]>([
     {
@@ -160,6 +177,8 @@ export default function EditRecipePage() {
         setAllowComments(recipe.allow_comments)
         setHeroImage(recipe.cover_image)
         setGalleryImages(recipe.gallery_images ?? [])
+        setPrepTime(parseTimeToMinutes(recipe.prep_time))
+        setCookTime(parseTimeToMinutes(recipe.cook_time))
 
         if (recipe.categories?.[0]) {
           setCategory(recipe.categories[0].name)
@@ -363,6 +382,8 @@ export default function EditRecipePage() {
           allowComments,
           coverImage: heroImage || undefined,
           galleryImages: galleryImages.length > 0 ? galleryImages : undefined,
+          prepTime: prepTime || undefined,
+          cookTime: cookTime || undefined,
           instructions: instructions.filter((i) => i.text.trim()).map((i) => ({
             ...i,
             imageUrl: stepImages[i.id] || undefined,
@@ -541,6 +562,42 @@ export default function EditRecipePage() {
                             {d}
                           </button>
                         ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Prep Time (min)
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={prepTime || ""}
+                        onChange={(e) => setPrepTime(parseInt(e.target.value) || 0)}
+                        placeholder="0"
+                        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Cook Time (min)
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={cookTime || ""}
+                        onChange={(e) => setCookTime(parseInt(e.target.value) || 0)}
+                        placeholder="0"
+                        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Total Time
+                      </label>
+                      <div className="h-10 w-full rounded-lg border border-slate-100 bg-slate-50 px-3 flex items-center text-sm text-slate-500">
+                        {prepTime + cookTime > 0 ? `${prepTime + cookTime} min` : "—"}
                       </div>
                     </div>
                   </div>
@@ -861,7 +918,16 @@ export default function EditRecipePage() {
 
                 {/* Basics Section */}
                 <div className="rounded-lg border border-slate-200 bg-white p-5 mb-4">
-                  <h3 className="text-base font-semibold text-slate-900 mb-4">Basics</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-base font-semibold text-slate-900">Basics</h3>
+                    <button
+                      onClick={() => setCurrentStep(1)}
+                      className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-orange-500 transition-colors cursor-pointer"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Edit
+                    </button>
+                  </div>
                   <div className="space-y-3">
                     <div>
                       <p className="text-xs text-slate-500 mb-1">Recipe Title</p>
@@ -881,6 +947,18 @@ export default function EditRecipePage() {
                         </span>
                       </div>
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-500">⏱️</span>
+                        <span className="text-xs text-slate-500">Prep Time:</span>
+                        <span className="text-sm font-medium text-slate-900">{prepTime > 0 ? `${prepTime} mins` : "—"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-500">🔥</span>
+                        <span className="text-xs text-slate-500">Cook Time:</span>
+                        <span className="text-sm font-medium text-slate-900">{cookTime > 0 ? `${cookTime} mins` : "—"}</span>
+                      </div>
+                    </div>
                     <div>
                       <p className="text-xs text-slate-500 mb-1">Description</p>
                       <p className="text-sm text-slate-700">{description || "—"}</p>
@@ -890,7 +968,16 @@ export default function EditRecipePage() {
 
                 {/* Ingredients Section */}
                 <div className="rounded-lg border border-slate-200 bg-white p-5">
-                  <h3 className="text-base font-semibold text-slate-900 mb-4">Ingredients</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-base font-semibold text-slate-900">Ingredients</h3>
+                    <button
+                      onClick={() => setCurrentStep(2)}
+                      className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-orange-500 transition-colors cursor-pointer"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Edit
+                    </button>
+                  </div>
                   {ingredientGroups.map((group) => (
                     <div key={group.id} className="mb-3 last:mb-0">
                       <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">

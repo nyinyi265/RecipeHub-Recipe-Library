@@ -29,6 +29,8 @@ export const createRecipeSchema = z.object({
   category: z.string().optional(),
   coverImage: z.string().optional(),
   galleryImages: z.array(z.string()).max(4).optional(),
+  prepTime: z.number().min(0).optional(),
+  cookTime: z.number().min(0).optional(),
   difficulty: z.enum(difficultyValues).default("Easy"),
   status: z.enum(statusValues).default("draft"),
   featured: z.boolean().default(false),

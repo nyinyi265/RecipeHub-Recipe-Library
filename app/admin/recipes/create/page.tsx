@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Fragment } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -84,6 +84,8 @@ export default function CreateRecipePage() {
   const [stepImages, setStepImages] = useState<Record<string, string | null>>({})
   const [heroImage, setHeroImage] = useState<string | null>(null)
   const [galleryImages, setGalleryImages] = useState<string[]>([])
+  const [prepTime, setPrepTime] = useState<number>(0)
+  const [cookTime, setCookTime] = useState<number>(0)
 
   async function handleHeroImageChange(file: File | null) {
     if (file) {
@@ -246,6 +248,8 @@ export default function CreateRecipePage() {
           allowComments,
           coverImage: heroImage || undefined,
           galleryImages: galleryImages.length > 0 ? galleryImages : undefined,
+          prepTime: prepTime || undefined,
+          cookTime: cookTime || undefined,
           instructions: instructions.filter((i) => i.text.trim()).map((i) => ({
             ...i,
             imageUrl: stepImages[i.id] || undefined,
@@ -419,6 +423,42 @@ export default function CreateRecipePage() {
                             {d}
                           </button>
                         ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Prep Time (min)
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={prepTime || ""}
+                        onChange={(e) => setPrepTime(parseInt(e.target.value) || 0)}
+                        placeholder="0"
+                        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Cook Time (min)
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={cookTime || ""}
+                        onChange={(e) => setCookTime(parseInt(e.target.value) || 0)}
+                        placeholder="0"
+                        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Total Time
+                      </label>
+                      <div className="h-10 w-full rounded-lg border border-slate-100 bg-slate-50 px-3 flex items-center text-sm text-slate-500">
+                        {prepTime + cookTime > 0 ? `${prepTime + cookTime} min` : "—"}
                       </div>
                     </div>
                   </div>
@@ -788,7 +828,10 @@ export default function CreateRecipePage() {
                       <span className="text-lg">📝</span>
                       <h3 className="text-base font-semibold text-slate-900">Basics</h3>
                     </div>
-                    <button className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-orange-500 transition-colors cursor-pointer">
+                    <button
+                      onClick={() => setCurrentStep(1)}
+                      className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-orange-500 transition-colors cursor-pointer"
+                    >
                       <Pencil className="h-3.5 w-3.5" />
                       Edit
                     </button>
@@ -797,19 +840,19 @@ export default function CreateRecipePage() {
                   <div className="space-y-3">
                     <div>
                       <p className="text-xs text-slate-500 mb-1">Recipe Title</p>
-                      <p className="text-sm font-medium text-slate-900">Classic Beef Wellington</p>
+                      <p className="text-sm font-medium text-slate-900">{recipeName || "—"}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-xs text-slate-500 mb-1">Category</p>
                         <span className="inline-block rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
-                          Main Course
+                          {category || "Uncategorized"}
                         </span>
                       </div>
                       <div>
                         <p className="text-xs text-slate-500 mb-1">Difficulty</p>
                         <span className="inline-block rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
-                          Advanced
+                          {difficulty}
                         </span>
                       </div>
                     </div>
@@ -817,20 +860,18 @@ export default function CreateRecipePage() {
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-slate-500">⏱️</span>
                         <span className="text-xs text-slate-500">Prep Time:</span>
-                        <span className="text-sm font-medium text-slate-900">45 mins</span>
+                        <span className="text-sm font-medium text-slate-900">{prepTime > 0 ? `${prepTime} mins` : "—"}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-slate-500">🔥</span>
                         <span className="text-xs text-slate-500">Cook Time:</span>
-                        <span className="text-sm font-medium text-slate-900">2h 15mins</span>
+                        <span className="text-sm font-medium text-slate-900">{cookTime > 0 ? `${cookTime} mins` : "—"}</span>
                       </div>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500 mb-1">Description</p>
                       <p className="text-sm text-slate-700">
-                        A classic British dish consisting of a beef tenderloin coated with pâté
-                        and duxelles, wrapped in puff pastry. A show-stopping centerpiece for any
-                        holiday meal.
+                        {description || "—"}
                       </p>
                     </div>
                   </div>
@@ -843,7 +884,10 @@ export default function CreateRecipePage() {
                       <span className="text-lg">🥘</span>
                       <h3 className="text-base font-semibold text-slate-900">Ingredients</h3>
                     </div>
-                    <button className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-orange-500 transition-colors cursor-pointer">
+                    <button
+                      onClick={() => setCurrentStep(2)}
+                      className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-orange-500 transition-colors cursor-pointer"
+                    >
                       <Pencil className="h-3.5 w-3.5" />
                       Edit
                     </button>
@@ -858,23 +902,26 @@ export default function CreateRecipePage() {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td colSpan={3} className="pt-3 pb-1">
-                          <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
-                            The Beef
-                          </span>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-slate-100">
-                        <td className="py-2 text-slate-900">2 lbs</td>
-                        <td className="py-2 text-slate-900">Center-cut beef tenderloin</td>
-                        <td className="py-2 text-slate-500">Trimmed</td>
-                      </tr>
-                      <tr>
-                        <td className="py-2 text-slate-900">2 tbsp</td>
-                        <td className="py-2 text-slate-900">Olive oil</td>
-                        <td className="py-2 text-slate-500">For searing</td>
-                      </tr>
+                      {ingredientGroups.map((group) => (
+                        group.ingredients.filter(i => i.name.trim()).length > 0 && (
+                          <Fragment key={group.id}>
+                            <tr>
+                              <td colSpan={3} className="pt-3 pb-1">
+                                <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                                  {group.name}
+                                </span>
+                              </td>
+                            </tr>
+                            {group.ingredients.filter(i => i.name.trim()).map((ing) => (
+                              <tr key={ing.id} className="border-b border-slate-100">
+                                <td className="py-2 text-slate-900">{ing.qty} {ing.unit}</td>
+                                <td className="py-2 text-slate-900">{ing.name}</td>
+                                <td className="py-2 text-slate-500">{ing.prepNotes || "—"}</td>
+                              </tr>
+                            ))}
+                          </Fragment>
+                        )
+                      ))}
                     </tbody>
                   </table>
                 </div>

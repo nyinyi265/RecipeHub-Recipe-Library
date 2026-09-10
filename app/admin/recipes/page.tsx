@@ -387,14 +387,14 @@ export default function AdminRecipesPage() {
                   <div className="flex items-center gap-1">
                     <Link
                       href={`/admin/recipes/${recipe.id}/edit`}
-                      className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                      className="rounded p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
                     >
                       <Pencil className="h-4 w-4" />
                     </Link>
                     <button
                       onClick={() => handleDelete(recipe.id, recipe.title)}
                       disabled={deletingId === recipe.id}
-                      className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                      className="rounded p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 cursor-pointer"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>

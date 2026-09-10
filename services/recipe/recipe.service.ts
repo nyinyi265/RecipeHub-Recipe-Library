@@ -26,6 +26,15 @@ function mapStatus(status: string): "DRAFT" | "PUBLISHED" | "PRIVATE" {
 }
 
 /**
+ * Converts minutes to a DateTime object for @db.Time(0) fields.
+ */
+function minutesToTime(minutes: number): Date {
+  const date = new Date(1970, 0, 1);
+  date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
+  return date;
+}
+
+/**
  * Generates a URL-friendly slug from a title.
  */
 function generateSlug(title: string): string {
@@ -186,6 +195,11 @@ export async function updateRecipe(id: string, input: CreateRecipeInput) {
       description: input.description || null,
       cover_image: input.coverImage || null,
       gallery_images: input.galleryImages ?? [],
+      prep_time: input.prepTime != null ? minutesToTime(input.prepTime) : null,
+      cook_time: input.cookTime != null ? minutesToTime(input.cookTime) : null,
+      total_time: input.prepTime != null && input.cookTime != null
+        ? minutesToTime(input.prepTime + input.cookTime)
+        : null,
       difficulty: mapDifficulty(input.difficulty),
       status: mapStatus(input.status),
       featured: input.featured,
@@ -285,6 +299,11 @@ export async function createRecipe(input: CreateRecipeInput) {
       description: input.description || null,
       cover_image: input.coverImage || null,
       gallery_images: input.galleryImages ?? [],
+      prep_time: input.prepTime != null ? minutesToTime(input.prepTime) : null,
+      cook_time: input.cookTime != null ? minutesToTime(input.cookTime) : null,
+      total_time: input.prepTime != null && input.cookTime != null
+        ? minutesToTime(input.prepTime + input.cookTime)
+        : null,
       difficulty: mapDifficulty(input.difficulty),
       status: mapStatus(input.status),
       featured: input.featured,

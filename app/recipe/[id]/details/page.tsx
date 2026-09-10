@@ -15,6 +15,16 @@ export const metadata = {
   description: "View recipe details, preparation steps, and reviews.",
 };
 
+function formatTime(time: Date | null): string {
+  if (!time) return "N/A";
+  const hours = time.getUTCHours();
+  const mins = time.getUTCMinutes();
+  if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
+  if (hours > 0) return `${hours}h`;
+  if (mins > 0) return `${mins}m`;
+  return "N/A";
+}
+
 export default async function RecipeDetailPage({
   params,
 }: {
@@ -35,8 +45,8 @@ export default async function RecipeDetailPage({
     image: recipe.cover_image || "/images/login.png",
     rating: 4.8,
     reviewCount: 0,
-    prepTime: recipe.prep_time ? String(recipe.prep_time) : "N/A",
-    cookTime: recipe.cook_time ? String(recipe.cook_time) : "N/A",
+    prepTime: formatTime(recipe.prep_time),
+    cookTime: formatTime(recipe.cook_time),
     servings: recipe.servings,
     calories: recipe.Calories,
     description: recipe.description || "",
